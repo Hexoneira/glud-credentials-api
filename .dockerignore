@@ -1,0 +1,14 @@
+# Ignore all files by default
+**
+
+# Do not ignore the Dockerfile itself
+!Dockerfile
+
+# Do not ignore the target folder itself
+!target/
+
+# Ignore all subdirectories and other files under target/
+target/*
+
+# Allow only JAR files under target/
+!target/*.jar
