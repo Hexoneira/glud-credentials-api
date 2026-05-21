@@ -72,8 +72,8 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
-            # Iniciar sesión en el registro desde la VM
-            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            # Iniciar sesión en el registro desde la VM con un token dedicado de solo lectura
+            echo "${{ secrets.GHCR_READONLY_TOKEN }}" | docker login ghcr.io -u "${{ secrets.GHCR_USERNAME }}" --password-stdin
             
             # Descargar la imagen nueva
             docker pull ghcr.io/${{ github.repository }}:latest
