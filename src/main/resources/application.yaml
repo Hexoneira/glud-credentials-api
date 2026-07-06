@@ -1,3 +1,6 @@
+totp:
+   secret: ${RANDOM_SEED}
+   tenant: ${TENANT}
 spring:
   application:
     name: credentials
