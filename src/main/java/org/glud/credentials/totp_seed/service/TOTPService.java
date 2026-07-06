@@ -1,6 +1,5 @@
-package org.glud.credentials.TOTPseed.Service;
+package org.glud.credentials.totp_seed.service;
 
-import ch.qos.logback.core.net.SyslogOutputStream;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -17,11 +16,6 @@ public class TOTPService {
     private String serverSecret;
 
     public String generateSeed(String  studentId) throws NoSuchAlgorithmException {
-
-        System.out.println(serverSecret);
-        System.out.println(tenantCode);
-
-
         String seed = studentId +":"+tenantCode+":"+serverSecret;
 
         byte[] hash = MessageDigest.getInstance("SHA-256").digest(seed.getBytes());

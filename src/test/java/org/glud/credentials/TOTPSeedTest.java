@@ -1,6 +1,6 @@
 package org.glud.credentials;
 
-import org.glud.credentials.TOTPseed.Service.TOTPService;
+import org.glud.credentials.totp_seed.service.TOTPService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;

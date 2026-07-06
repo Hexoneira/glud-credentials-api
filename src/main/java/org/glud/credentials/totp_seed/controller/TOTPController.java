@@ -1,9 +1,7 @@
-package org.glud.credentials.TOTPseed.Controller;
+package org.glud.credentials.totp_seed.controller;
 
 import lombok.RequiredArgsConstructor;
-import org.glud.credentials.TOTPseed.Service.TOTPService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
+import org.glud.credentials.totp_seed.service.TOTPService;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.NoSuchAlgorithmException;
@@ -13,9 +11,7 @@ import java.security.NoSuchAlgorithmException;
 @RequiredArgsConstructor
 public class TOTPController {
 
-    @Autowired
-    TOTPService totpService;
-
+    final TOTPService totpService;
 
     @PostMapping("/generate-seed/{id}")
     public String generateSeed(@PathVariable String id) throws NoSuchAlgorithmException {
