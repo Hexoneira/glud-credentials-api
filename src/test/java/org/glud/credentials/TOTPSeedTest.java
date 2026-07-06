@@ -15,7 +15,7 @@ import java.security.NoSuchAlgorithmException;
         "totp.secret=8xJkLp2QwErTyUiOpAsDfGhJkLzXcVbNmQwErTyU=",
         "totp.tenant=TESTAPP"
 })
-public class TOTPSeedTest {
+class TOTPSeedTest {
 
     @Autowired
     TOTPService totpService;
