@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.glud.credentials.auth.model.User;
 import org.glud.credentials.auth.repository.UserRepository;
 import org.glud.credentials.auth.dto.LoginRequestDTO;
-import org.glud.credentials.security.config.InvalidCredentialsException;
+import org.glud.credentials.security.exception.InvalidCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.glud.credentials.security.components.JwtUtils;

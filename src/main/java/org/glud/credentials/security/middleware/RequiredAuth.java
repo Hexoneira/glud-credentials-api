@@ -23,40 +23,37 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class RequiredAuth extends OncePerRequestFilter {
 
-    private final JwtUtils jwtUtils;
-    private final UserDetailsServiceImpl userDetailsService;
     private static final Logger logger = LoggerFactory.getLogger(RequiredAuth.class);
+
+    private final JwtUtils jwtUtils;
+    private final UserDetailsServiceImpl userDetailsServiceImpl;
 
     @Override
     protected void doFilterInternal(
-            HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull FilterChain filterChain)
+            @NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull FilterChain filterChain)
             throws ServletException, IOException {
-        logger.debug("AuthTokenFilter called for URI: {}", request.getRequestURI());
         try {
             String jwt = jwtUtils.getJwtFromHeader(request);
             if (jwt != null && jwtUtils.validateJwtToken(jwt)) {
+
                 String extractedUserId = jwtUtils.getUserIdFromJwtToken(jwt);
-
-                UserDetailsImpl userDetails = (UserDetailsImpl) userDetailsService.loadUserByUsername(extractedUserId);
-
+                UserDetailsImpl userDetails = (UserDetailsImpl) userDetailsServiceImpl.loadUserByUsername(extractedUserId);
                 UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(userDetails,
+                        new UsernamePasswordAuthenticationToken(
+                                userDetails,
                                 null,
-                                userDetails.getAuthorities());
-                logger.debug("Roles from JWT: {}", userDetails.getAuthorities());
+                                userDetails.getAuthorities()
+                        ); //revisar eso de credentials
 
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
+                request.setAttribute("user", userDetails); // Inyectar req.user
                 SecurityContextHolder.getContext().setAuthentication(authentication);
-                //Inyectar req.user
             }
         } catch (Exception e) {
-            logger.error("Cannot set user authentication: {}", e);
-            //Detener la petición para evitar que siga con el proceso
+            logger.error("Error en la autorización: {}", e.getMessage());
         }
-
         filterChain.doFilter(request, response);
     }
-
-    }
+}
 

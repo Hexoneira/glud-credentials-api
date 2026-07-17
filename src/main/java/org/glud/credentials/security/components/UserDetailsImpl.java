@@ -4,6 +4,7 @@ package org.glud.credentials.security.components;
 import lombok.Getter;
 import lombok.Setter;
 import org.glud.credentials.auth.model.User;
+import org.jspecify.annotations.NullMarked;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
@@ -11,6 +12,7 @@ import java.util.Collection;
 
 @Getter
 @Setter
+@NullMarked
 public class UserDetailsImpl implements UserDetails {
     private final Long userId;
     private final String username;
