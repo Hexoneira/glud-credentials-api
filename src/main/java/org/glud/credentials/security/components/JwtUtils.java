@@ -1,40 +1,68 @@
 package org.glud.credentials.security.components;
 
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.UnsupportedJwtException;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.security.core.userdetails.UserDetails;
+import org.glud.credentials.security.config.GlobalExceptionHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import javax.crypto.SecretKey;
 import java.security.Key;
 import java.util.Date;
 
 @Component
 public class JwtUtils {
 
-    private String jwtSecret;
-    private String jwtExpirationTime;
+    private static final Logger logger = LoggerFactory.getLogger(JwtUtils.class);
 
-    public String getJwtFromHeader(HttpServletRequest request) {
+    @Value("${jwt.secret}")
+    private String jwtSecret;
+
+    @Value("${jwt.expiration}")
+    private long jwtExpirationTime;
+
+    public String getJwtFromHeader(HttpServletRequest request) throws Exception {
         String bearerToken = request.getHeader("Authorization");
-        if(bearerToken != null && bearerToken.startsWith("Bearer ")){
+        if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
             return bearerToken.substring(7);
         }
-        return null;
+        throw new GlobalExceptionHandler().handleJwtException(
+                new IllegalArgumentException("Falta el token JWT o no es del tipo por «Bearer»"));
     }
 
-    public String createJwtFromUsername (UserDetails userMedata){
-        String username = userMedata.getUsername();
+    public String generateJwtToken(Long userId, Long tenantId, Long roleId) {
         return Jwts.builder()
-                .subject(username)
+                .subject(userId.toString())
+                .claim("tenantId", tenantId)
+                .claim("roleId", roleId)
                 .issuedAt(new Date())
                 .expiration(new Date((new Date().getTime() + jwtExpirationTime)))
                 .signWith(key())
                 .compact();
     }
 
-    private Key key(){
+    private Key key() {
         return Keys.hmacShaKeyFor(Decoders.BASE64.decode(jwtSecret));
+    }
+
+    public boolean validateJwtToken(String authToken) throws Exception {
+        try{
+            Jwts.parser().verifyWith((SecretKey) key()).build().parseSignedClaims(authToken);
+            return true;
+        } catch (MalformedJwtException | ExpiredJwtException | UnsupportedJwtException | IllegalArgumentException e) {
+            logger.error("JWT token validation failed: {}", e.getMessage());
+            throw new GlobalExceptionHandler().handleJwtException(e);
+        }
+    }
+
+    public String getUserIdFromJwtToken(String jwt) {
+        return Jwts.parser().verifyWith((SecretKey) key()).build().parseSignedClaims(jwt).getPayload().getSubject();
     }
 }

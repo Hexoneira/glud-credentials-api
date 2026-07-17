@@ -1,6 +1,9 @@
 totp:
    secret: ${RANDOM_SEED}
    tenant: ${TENANT}
+jwt:
+  secret: ${JWT_SECRET}
+  expiration: ${JWT_EXPIRATION}
 spring:
   application:
     name: credentials

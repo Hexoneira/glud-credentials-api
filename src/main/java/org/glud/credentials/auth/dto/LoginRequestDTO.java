@@ -1,8 +1,8 @@
-package org.glud.credentials.auth.utilities;
+package org.glud.credentials.auth.dto;
 
 import jakarta.validation.constraints.NotBlank;
 
-public record RequestDTO(
+public record LoginRequestDTO(
         @NotBlank
         String username,
         @NotBlank

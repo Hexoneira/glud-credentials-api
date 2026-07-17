@@ -13,8 +13,13 @@ public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long userId;
-    @Column(nullable = false)
+    @Column(nullable = false,  unique = true)
     private String username;
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     private String password;
+    @OneToOne
+    @JoinColumn(name = "tenant_id", nullable = false)
+    private Tenant tenant;
+    @Column(nullable = false)
+    private Long roleId;
 }
