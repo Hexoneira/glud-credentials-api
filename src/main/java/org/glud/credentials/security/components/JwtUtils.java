@@ -1,19 +1,16 @@
 package org.glud.credentials.security.components;
 
-import io.jsonwebtoken.ExpiredJwtException;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.MalformedJwtException;
-import io.jsonwebtoken.UnsupportedJwtException;
+import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.http.HttpServletRequest;
+import org.glud.credentials.auth.model.Rol;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
-import java.security.Key;
 import java.util.Date;
 
 @Component
@@ -21,10 +18,10 @@ public class JwtUtils {
 
     private static final Logger logger = LoggerFactory.getLogger(JwtUtils.class);
 
-    @Value("${jwt.secret}")
+    @Value("${jwt.secret:default-secret-key-32-bytes-long-base64-encoded-value-for-testing-only}")
     private String jwtSecret;
 
-    @Value("${jwt.expiration}")
+    @Value("${jwt.expiration:86400000}")
     private long jwtExpirationTime;
 
     public String getJwtFromHeader(HttpServletRequest request) {
@@ -36,7 +33,7 @@ public class JwtUtils {
         return null;
     }
 
-    public String generateJwtToken(Long userId, Long tenantId, Long roleId) {
+    public String generateJwtToken(Long userId, Long tenantId, Rol roleId) {
         return Jwts.builder()
                 .subject(userId.toString())
                 .claim("tenantId", tenantId)
@@ -47,13 +44,13 @@ public class JwtUtils {
                 .compact();
     }
 
-    private Key key() {
+    private SecretKey key() {
         return Keys.hmacShaKeyFor(Decoders.BASE64.decode(jwtSecret));
     }
 
     public boolean validateJwtToken(String authToken) {
-        try{
-            Jwts.parser().verifyWith((SecretKey) key()).build().parseSignedClaims(authToken);
+        try {
+            Jwts.parser().verifyWith(key()).build().parseSignedClaims(authToken);
             return true;
         } catch (MalformedJwtException | ExpiredJwtException | UnsupportedJwtException | IllegalArgumentException e) {
             logger.error("JWT token validation failed: {}", e.getMessage());
@@ -62,6 +59,8 @@ public class JwtUtils {
     }
 
     public String getUserIdFromJwtToken(String jwt) {
-        return Jwts.parser().verifyWith((SecretKey) key()).build().parseSignedClaims(jwt).getPayload().getSubject();
+        return Jwts.parser().verifyWith(key()).build().parseSignedClaims(jwt).getPayload().getSubject();
     }
 }
+
+

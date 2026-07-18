@@ -25,7 +25,7 @@ public class UserService {
             throw new InvalidCredentialsException("Usuario o contraseña incorrectos");
         }
         return jwtUtils.generateJwtToken(
-                existingUser.getUserId(), existingUser.getTenant().getTenantId(), existingUser.getRoleId()
+                existingUser.getUserId(), existingUser.getTenant().getTenantId(), existingUser.getRol()
         );
     }
 }

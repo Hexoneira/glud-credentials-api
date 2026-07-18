@@ -21,5 +21,5 @@ public class User {
     @JoinColumn(name = "tenant_id", nullable = false)
     private Tenant tenant;
     @Column(nullable = false)
-    private Long roleId;
+    private Rol rol;
 }
