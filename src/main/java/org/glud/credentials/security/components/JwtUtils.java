@@ -16,7 +16,7 @@ import java.util.Date;
 @Component
 public class JwtUtils {
 
-    private static final Logger logger = LoggerFactory.getLogger(JwtUtils.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(JwtUtils.class);
 
     @Value("${jwt.secret:default-secret-key-32-bytes-long-base64-encoded-value-for-testing-only}")
     private String jwtSecret;
@@ -29,7 +29,7 @@ public class JwtUtils {
         if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
             return bearerToken.substring(7);
         }
-        logger.error("JWT token is missing or does not start with Bearer");
+        LOGGER.error("JWT token is missing or does not start with Bearer");
         return null;
     }
 
@@ -53,7 +53,7 @@ public class JwtUtils {
             Jwts.parser().verifyWith(key()).build().parseSignedClaims(authToken);
             return true;
         } catch (MalformedJwtException | ExpiredJwtException | UnsupportedJwtException | IllegalArgumentException e) {
-            logger.error("JWT token validation failed: {}", e.getMessage());
+            LOGGER.error("JWT token validation failed: {}", e.getMessage());
             return false;
         }
     }

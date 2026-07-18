@@ -30,7 +30,7 @@ public class UserDetailsImpl implements UserDetails {
         this.password = password;
         this.tenantId = tenantId;
         this.roleId = roleId;
-        this.authorities = (authorities != null) ? authorities : Collections.emptyList();
+        this.authorities = authorities;
     }
 
     public static UserDetailsImpl build(User user) {

@@ -23,7 +23,7 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class RequiredAuth extends OncePerRequestFilter {
 
-    private static final Logger logger = LoggerFactory.getLogger(RequiredAuth.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(RequiredAuth.class);
 
     private final JwtUtils jwtUtils;
     private final UserDetailsServiceImpl userDetailsServiceImpl;
@@ -51,7 +51,7 @@ public class RequiredAuth extends OncePerRequestFilter {
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }
         } catch (Exception e) {
-            logger.error("Error en la autorización: {}", e.getMessage());
+            LOGGER.error("Error en la autorización: {}", e.getMessage());
         }
         filterChain.doFilter(request, response);
     }
