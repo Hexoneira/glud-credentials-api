@@ -1,5 +1,7 @@
 package org.glud.credentials;
 
+import org.glud.credentials.security.components.JwtUtils;
+import org.glud.credentials.security.middleware.RequiredAuth;
 import org.glud.credentials.totp_seed.controller.TOTPController;
 import org.glud.credentials.totp_seed.service.TOTPService;
 import org.junit.jupiter.api.Test;
@@ -23,6 +25,12 @@ class TotpControllerTest {
 
     @MockitoBean
     private TOTPService totpService;
+
+    @MockitoBean
+    private JwtUtils jwtUtils;
+
+    @MockitoBean
+    private RequiredAuth requiredAuth;
 
     @Test
     @WithMockUser
