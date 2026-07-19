@@ -10,13 +10,4 @@ public class CredentialsApplication {
 		SpringApplication.run(CredentialsApplication.class, args);
 	}
 
-
-
-
-
-
-
-
-
-
 }
