@@ -58,6 +58,15 @@
 			<artifactId>h2</artifactId>
 			<scope>test</scope>
 		</dependency>
+		<!--Dependencies required for database migrations-->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-flyway</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.flywaydb</groupId>
+			<artifactId>flyway-database-postgresql</artifactId>
+		</dependency>
 		<!--Dependecy required for JWT tokens to work with Spring Security-->
 		<dependency>
 			<groupId>io.jsonwebtoken</groupId>
