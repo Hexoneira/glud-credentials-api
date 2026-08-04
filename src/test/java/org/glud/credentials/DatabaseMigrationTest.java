@@ -26,9 +26,9 @@ class DatabaseMigrationTest {
     @Test
     void seed_createsSuperAdminWithValidPassword() {
         String storedPassword = jdbcTemplate.queryForObject(
-                "SELECT password FROM users WHERE username = 'superadmin'", String.class);
+                "SELECT password FROM users WHERE username = '20210000000'", String.class);
         String rol = jdbcTemplate.queryForObject(
-                "SELECT rol FROM users WHERE username = 'superadmin'", String.class);
+                "SELECT rol FROM users WHERE username = '20210000000'", String.class);
         String status = jdbcTemplate.queryForObject(
                 "SELECT status FROM tenants WHERE tenant_code = 'GLUD'", String.class);
 
