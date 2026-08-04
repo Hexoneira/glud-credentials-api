@@ -48,4 +48,11 @@ class JwtUtilsTest {
         MockHttpServletRequest request = new MockHttpServletRequest();
         assertNull(jwtUtils.getJwtFromHeader(request));
     }
+
+    @Test
+    void getJwtFromHeader_returnsNull_whenHeaderDoesNotStartWithBearer() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addHeader("Authorization", "Basic abc123");
+        assertNull(jwtUtils.getJwtFromHeader(request));
+    }
 }

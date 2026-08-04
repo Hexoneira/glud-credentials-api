@@ -1,6 +1,7 @@
 package org.glud.credentials.security.components;
 
 import io.jsonwebtoken.*;
+import io.jsonwebtoken.io.DecodingException;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
@@ -32,7 +33,7 @@ public class JwtUtils {
         }
         try {
             Decoders.BASE64.decode(jwtSecret);
-        } catch (IllegalArgumentException e) {
+        } catch (DecodingException e) {
             throw new IllegalStateException("JWT_SECRET must be a valid Base64 string of at least 32 bytes", e);
         }
     }
