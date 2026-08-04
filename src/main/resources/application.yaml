@@ -4,6 +4,9 @@ totp:
 jwt:
    secret: ${JWT_SECRET}
    expiration: ${JWT_EXPIRATION}
+app:
+   cors:
+      allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:4321}
 spring:
    application:
      name: credentials
