@@ -90,4 +90,12 @@ jobs:
             docker stop glud-credentials-api || true
             docker rm glud-credentials-api || true
             
-            docker run -d --restart unless-stopped --name glud-credentials-api -p 8080:8080 ghcr.io/${{ env.IMAGE_NAME }}:latest
+            docker run -d --restart unless-stopped --name glud-credentials-api -p 8080:8080 \
+              -e DB_URL="${{ secrets.DB_URL }}" \
+              -e DB_USERNAME="${{ secrets.DB_USERNAME }}" \
+              -e DB_PASSWORD="${{ secrets.DB_PASSWORD }}" \
+              -e JWT_SECRET="${{ secrets.JWT_SECRET }}" \
+              -e JWT_EXPIRATION="${{ secrets.JWT_EXPIRATION }}" \
+              -e RANDOM_SEED="${{ secrets.RANDOM_SEED }}" \
+              -e TENANT="${{ secrets.TENANT }}" \
+              ghcr.io/${{ env.IMAGE_NAME }}:latest
