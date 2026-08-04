@@ -3,6 +3,7 @@ package org.glud.credentials.security.components;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
 import org.glud.credentials.auth.model.Rol;
 import org.slf4j.Logger;
@@ -18,11 +19,23 @@ public class JwtUtils {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(JwtUtils.class);
 
-    @Value("${jwt.secret:default-secret-key-32-bytes-long-base64-encoded-value-for-testing-only}")
+    @Value("${jwt.secret}")
     private String jwtSecret;
 
     @Value("${jwt.expiration:86400000}")
     private long jwtExpirationTime;
+
+    @PostConstruct
+    void validateSecret() {
+        if (jwtSecret == null || jwtSecret.isBlank()) {
+            throw new IllegalStateException("JWT_SECRET is not configured. Set jwt.secret before starting the application.");
+        }
+        try {
+            Decoders.BASE64.decode(jwtSecret);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalStateException("JWT_SECRET must be a valid Base64 string of at least 32 bytes", e);
+        }
+    }
 
     public String getJwtFromHeader(HttpServletRequest request) {
         String bearerToken = request.getHeader("Authorization");
