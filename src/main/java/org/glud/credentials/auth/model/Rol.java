@@ -1,5 +1,5 @@
 package org.glud.credentials.auth.model;
 
 public enum Rol {
-    MIEMBRO, INVITADO
+    SUPER_ADMIN, TENANT_ADMIN, MIEMBRO, INVITADO
 }
