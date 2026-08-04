@@ -1,6 +1,9 @@
 totp:
   secret: test-secret-value
   tenant: TESTAPP
+jwt:
+  secret: k5oD8hP5mWg9p5NzT5y8aTU1DpxHiP7xWROpNuXIkub
+  expiration: 86400000
 spring:
   datasource:
     url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
@@ -10,5 +13,8 @@ spring:
   jpa:
     database-platform: org.hibernate.dialect.H2Dialect
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: validate
     show-sql: true
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
