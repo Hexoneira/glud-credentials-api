@@ -51,6 +51,9 @@ public class TOTPService {
         return false;
     }
 
+    // RFC 6238 (TOTP) defines HMAC-SHA1 as the default algorithm for interoperability;
+    // TOTP security does not depend on SHA-1 collision resistance.
+    @SuppressWarnings("java:S4790")
     public String generateCode(String base32Seed, long timeIndex) throws NoSuchAlgorithmException, InvalidKeyException {
         byte[] key = base32Decode(base32Seed);
         byte[] counter = new byte[8];

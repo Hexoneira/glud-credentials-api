@@ -4,12 +4,11 @@ import lombok.RequiredArgsConstructor;
 import org.glud.credentials.access.dto.AccessRequestDTO;
 import org.glud.credentials.access.dto.AccessValidationResponseDTO;
 import org.glud.credentials.access.event.AccessDecisionEvent;
+import org.glud.credentials.access.model.AccessAudit;
 import org.glud.credentials.access.model.AccessResult;
 import org.glud.credentials.access.model.SubjectType;
-import org.glud.credentials.auth.model.Guest;
 import org.glud.credentials.auth.model.GuestStatus;
 import org.glud.credentials.auth.model.Tenant;
-import org.glud.credentials.auth.model.User;
 import org.glud.credentials.auth.model.UserStatus;
 import org.glud.credentials.auth.repository.GuestRepository;
 import org.glud.credentials.auth.repository.UserRepository;
@@ -50,22 +49,25 @@ public class AccessService {
             deny(request, subject.type(), subject.id(), subject.tenant(), "Código TOTP inválido o expirado");
         }
 
-        accessLogService.record(subject.type(), subject.id(), subject.codigo(), subject.tenant(),
-                request.totpCode(), request.deviceId(), request.location(), AccessResult.ALLOWED);
-        eventPublisher.publishEvent(new AccessDecisionEvent(
-                subject.id(), subject.type(), subject.tenant() != null ? subject.tenant().getTenantId() : null,
-                subject.codigo(), AccessResult.ALLOWED, "Acceso permitido", LocalDateTime.now()));
-
+        persist(request, subject, AccessResult.ALLOWED, "Acceso permitido");
         return new AccessValidationResponseDTO(true, "Acceso permitido", LocalDateTime.now());
     }
 
     private void deny(AccessRequestDTO request, SubjectType type, Long id, Tenant tenant, String message) {
-        accessLogService.record(type, id, request.codigo(), tenant,
-                request.totpCode(), request.deviceId(), request.location(), AccessResult.DENIED);
-        eventPublisher.publishEvent(new AccessDecisionEvent(
-                id, type, tenant != null ? tenant.getTenantId() : null, request.codigo(),
-                AccessResult.DENIED, message, LocalDateTime.now()));
+        persist(request, type, id, tenant, AccessResult.DENIED, message);
         throw new InvalidCredentialsException(message);
+    }
+
+    private void persist(AccessRequestDTO request, Subject subject, AccessResult result, String message) {
+        persist(request, subject.type(), subject.id(), subject.tenant(), result, message);
+    }
+
+    private void persist(AccessRequestDTO request, SubjectType type, Long id, Tenant tenant,
+                         AccessResult result, String message) {
+        accessLogService.persist(new AccessAudit(
+                type, id, request.codigo(), tenant, request.totpCode(), request.deviceId(), request.location(), result));
+        eventPublisher.publishEvent(new AccessDecisionEvent(
+                id, type, tenant != null ? tenant.getTenantId() : null, request.codigo(), result, message, LocalDateTime.now()));
     }
 
     private Subject resolveSubject(AccessRequestDTO request) {

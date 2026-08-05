@@ -1,6 +1,5 @@
 package org.glud.credentials;
 
-import org.glud.credentials.access.model.AccessLog;
 import org.glud.credentials.access.model.AccessResult;
 import org.glud.credentials.access.repository.AccessLogRepository;
 import org.glud.credentials.auth.model.Guest;

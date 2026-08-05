@@ -1,11 +1,9 @@
 package org.glud.credentials.access.service;
 
 import lombok.RequiredArgsConstructor;
+import org.glud.credentials.access.model.AccessAudit;
 import org.glud.credentials.access.model.AccessLog;
-import org.glud.credentials.access.model.AccessResult;
-import org.glud.credentials.access.model.SubjectType;
 import org.glud.credentials.access.repository.AccessLogRepository;
-import org.glud.credentials.auth.model.Tenant;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,17 +15,16 @@ public class AccessLogService {
     private final AccessLogRepository accessLogRepository;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void record(SubjectType subjectType, Long subjectId, String codigo, Tenant tenant,
-                       String totpCode, String deviceId, String location, AccessResult result) {
+    public void persist(AccessAudit audit) {
         AccessLog log = new AccessLog();
-        log.setSubjectType(subjectType);
-        log.setSubjectId(subjectId);
-        log.setCodigo(codigo);
-        log.setTenant(tenant);
-        log.setTotpCode(totpCode);
-        log.setDeviceId(deviceId);
-        log.setLocation(location);
-        log.setResult(result);
+        log.setSubjectType(audit.subjectType());
+        log.setSubjectId(audit.subjectId());
+        log.setCodigo(audit.codigo());
+        log.setTenant(audit.tenant());
+        log.setTotpCode(audit.totpCode());
+        log.setDeviceId(audit.deviceId());
+        log.setLocation(audit.location());
+        log.setResult(audit.result());
         accessLogRepository.save(log);
     }
 }

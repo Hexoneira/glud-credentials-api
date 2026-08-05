@@ -3,6 +3,7 @@ package org.glud.credentials;
 import org.glud.credentials.access.dto.AccessRequestDTO;
 import org.glud.credentials.access.dto.AccessValidationResponseDTO;
 import org.glud.credentials.access.event.AccessDecisionEvent;
+import org.glud.credentials.access.model.AccessAudit;
 import org.glud.credentials.access.model.AccessResult;
 import org.glud.credentials.access.model.SubjectType;
 import org.glud.credentials.access.service.AccessLogService;
@@ -19,6 +20,7 @@ import org.glud.credentials.security.components.UserDetailsImpl;
 import org.glud.credentials.security.exception.InvalidCredentialsException;
 import org.glud.credentials.totp_seed.service.TOTPService;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -31,10 +33,16 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import java.util.Collections;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class AccessServiceTest {
@@ -53,17 +61,19 @@ class AccessServiceTest {
     @InjectMocks
     private AccessService accessService;
 
-    @AfterEach
-    void clearContext() {
-        SecurityContextHolder.clearContext();
-    }
+    private Tenant tenant;
 
-    private Tenant tenant() {
-        Tenant tenant = new Tenant();
+    @BeforeEach
+    void setUp() {
+        tenant = new Tenant();
         tenant.setTenantId(1L);
         tenant.setName("GLUD");
         tenant.setTenantCode("GLUD");
-        return tenant;
+    }
+
+    @AfterEach
+    void clearContext() {
+        SecurityContextHolder.clearContext();
     }
 
     private User member(Long id, String codigo, UserStatus status) {
@@ -71,7 +81,7 @@ class AccessServiceTest {
         user.setUserId(id);
         user.setCodigo(codigo);
         user.setStatus(status);
-        user.setTenant(tenant());
+        user.setTenant(tenant);
         return user;
     }
 
@@ -80,7 +90,7 @@ class AccessServiceTest {
         guest.setGuestId(id);
         guest.setCodigo(codigo);
         guest.setStatus(status);
-        guest.setTenant(tenant());
+        guest.setTenant(tenant);
         return guest;
     }
 
@@ -99,6 +109,10 @@ class AccessServiceTest {
         return new AccessRequestDTO("101011000", SubjectType.GUEST, "123456", null, null);
     }
 
+    private AccessAudit audit(SubjectType type, Long id, String codigo, String deviceId, String location, AccessResult result) {
+        return new AccessAudit(type, id, codigo, tenant, "123456", deviceId, location, result);
+    }
+
     @Test
     void validate_allowsMemberWithValidTotp() throws Exception {
         when(userRepository.findByCodigo("20210000001")).thenReturn(Optional.of(member(1L, "20210000001", UserStatus.ACTIVE)));
@@ -110,8 +124,7 @@ class AccessServiceTest {
         assertTrue(result.allowed());
         assertEquals("Acceso permitido", result.message());
         assertNotNull(result.timestamp());
-        verify(accessLogService).record(eq(SubjectType.MEMBER), eq(1L), eq("20210000001"), any(), eq("123456"),
-                eq("escanner-01"), eq("Puerta principal"), eq(AccessResult.ALLOWED));
+        verify(accessLogService).persist(audit(SubjectType.MEMBER, 1L, "20210000001", "escanner-01", "Puerta principal", AccessResult.ALLOWED));
         verify(eventPublisher).publishEvent(any(AccessDecisionEvent.class));
     }
 
@@ -122,33 +135,30 @@ class AccessServiceTest {
         when(totpService.verify("seed", "123456")).thenReturn(false);
 
         assertThrows(InvalidCredentialsException.class, () -> accessService.validate(memberRequest()));
-        verify(accessLogService).record(eq(SubjectType.MEMBER), eq(1L), eq("20210000001"), any(), eq("123456"),
-                eq("escanner-01"), eq("Puerta principal"), eq(AccessResult.DENIED));
+        verify(accessLogService).persist(audit(SubjectType.MEMBER, 1L, "20210000001", "escanner-01", "Puerta principal", AccessResult.DENIED));
         verify(eventPublisher).publishEvent(any(AccessDecisionEvent.class));
-        verify(accessLogService, never()).record(any(), any(), any(), any(), anyString(), anyString(), anyString(),
-                eq(AccessResult.ALLOWED));
+        verify(accessLogService, never()).persist(argThat(a -> a.result() == AccessResult.ALLOWED));
     }
 
     @Test
-    void validate_deniesWhenSubjectUnknown() throws Exception {
+    void validate_deniesWhenSubjectUnknown() {
         when(userRepository.findByCodigo("999999")).thenReturn(Optional.empty());
 
         AccessRequestDTO req = new AccessRequestDTO("999999", SubjectType.MEMBER, "123456", null, null);
 
         assertThrows(InvalidCredentialsException.class, () -> accessService.validate(req));
-        verify(accessLogService).record(eq(SubjectType.UNKNOWN), isNull(), eq("999999"), isNull(), eq("123456"),
-                isNull(), isNull(), eq(AccessResult.DENIED));
+        verify(accessLogService).persist(new AccessAudit(SubjectType.UNKNOWN, null, "999999", null, "123456", null, null, AccessResult.DENIED));
     }
 
     @Test
-    void validate_deniesWhenMemberSuspended() throws Exception {
+    void validate_deniesWhenMemberSuspended() {
         when(userRepository.findByCodigo("20210000001")).thenReturn(Optional.of(member(1L, "20210000001", UserStatus.SUSPENDED)));
 
         assertThrows(InvalidCredentialsException.class, () -> accessService.validate(memberRequest()));
     }
 
     @Test
-    void validate_deniesWhenGuestNotActive() throws Exception {
+    void validate_deniesWhenGuestNotActive() {
         authenticateAsTenantAdmin();
         when(guestRepository.findByCodigoAndTenantTenantId("101011000", 1L))
                 .thenReturn(Optional.of(guest(5L, "101011000", GuestStatus.REVOKED)));
@@ -167,19 +177,17 @@ class AccessServiceTest {
         AccessValidationResponseDTO result = accessService.validate(guestRequest());
 
         assertTrue(result.allowed());
-        verify(accessLogService).record(eq(SubjectType.GUEST), eq(5L), eq("101011000"), any(), eq("123456"),
-                isNull(), isNull(), eq(AccessResult.ALLOWED));
+        verify(accessLogService).persist(audit(SubjectType.GUEST, 5L, "101011000", null, null, AccessResult.ALLOWED));
         verify(userRepository, never()).findByCodigo(anyString());
     }
 
     @Test
-    void validate_guestWithDefaultTypeIsNotResolvedAsMember() throws Exception {
+    void validate_guestWithDefaultTypeIsNotResolvedAsMember() {
         when(userRepository.findByCodigo("101011000")).thenReturn(Optional.empty());
 
         AccessRequestDTO req = new AccessRequestDTO("101011000", null, "123456", null, null);
 
         assertThrows(InvalidCredentialsException.class, () -> accessService.validate(req));
-        verify(accessLogService).record(eq(SubjectType.UNKNOWN), isNull(), eq("101011000"), isNull(), eq("123456"),
-                isNull(), isNull(), eq(AccessResult.DENIED));
+        verify(accessLogService).persist(new AccessAudit(SubjectType.UNKNOWN, null, "101011000", null, "123456", null, null, AccessResult.DENIED));
     }
 }

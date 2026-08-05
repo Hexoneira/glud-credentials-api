@@ -11,7 +11,7 @@ public record AccessRequestDTO(
         String codigo,
         SubjectType subjectType,
         @NotBlank(message = "El código TOTP es obligatorio")
-        @Pattern(regexp = "^[0-9]{6}$", message = "El código TOTP debe tener 6 dígitos")
+        @Pattern(regexp = "^\\d{6}$", message = "El código TOTP debe tener 6 dígitos")
         String totpCode,
         String deviceId,
         String location
