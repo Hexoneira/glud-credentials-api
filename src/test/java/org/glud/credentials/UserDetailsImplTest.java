@@ -45,6 +45,10 @@ class UserDetailsImplTest {
         assertEquals("mary", details.getUsername());
         assertEquals(20L, details.getTenantId());
         assertEquals(Rol.INVITADO, details.getRoleId());
+        assertEquals(
+                "ROLE_INVITADO",
+                details.getAuthorities().stream().findFirst().orElseThrow().getAuthority()
+        );
     }
 
     @Test

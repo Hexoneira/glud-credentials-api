@@ -40,6 +40,11 @@ public class GlobalExceptionHandler {
         return error(ex.getMessage(), HttpStatus.FORBIDDEN);
     }
 
+    @ExceptionHandler(RoleRequiredException.class)
+    public ResponseEntity<ApiError> handleRoleRequired(RoleRequiredException ex) {
+        return error(ex.getMessage(), HttpStatus.FORBIDDEN);
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiError> handleValidation(MethodArgumentNotValidException ex) {
         return error("Datos inválidos", HttpStatus.BAD_REQUEST);

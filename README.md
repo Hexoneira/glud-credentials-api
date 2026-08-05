@@ -47,13 +47,32 @@ El proyecto esta orientado a proveer una API robusta, segura y escalable para au
 ### Requisitos
 
 - JDK 25 instalado y configurado en PATH.
-- Acceso a una instancia de PostgreSQL.
+- Acceso a una instancia de PostgreSQL (recomendado: el contenedor de `docker-compose.yml`).
+
+### Levantar PostgreSQL con Docker (recomendado)
+
+```bash
+docker compose up -d db
+```
 
 ### Linux / macOS
 
+Copia `.env.example` a `.env`, ajusta los valores y expone las variables al proceso. Maven no carga `.env` automáticamente, así que puedes exportarlas en tu shell:
+
 ```bash
+set -a
+source .env
+set +a
 ./mvnw spring-boot:run
 ```
+
+O de una sola línea:
+
+```bash
+env $(grep -v '^#' .env | xargs) ./mvnw spring-boot:run
+```
+
+> `RANDOM_SEED` no puede quedar vacío: es el secreto del servidor para derivar las seeds TOTP de invitados. Genera uno con `openssl rand -hex 32`.
 
 ### Windows (PowerShell o CMD)
 
