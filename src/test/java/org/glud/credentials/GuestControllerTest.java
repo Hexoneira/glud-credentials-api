@@ -9,6 +9,7 @@ import org.glud.credentials.auth.service.GuestService;
 import org.glud.credentials.security.components.JwtUtils;
 import org.glud.credentials.security.exception.ActiveGuestAlreadyExistsException;
 import org.glud.credentials.security.exception.GuestLimitExceededException;
+import org.glud.credentials.security.exception.GuestNotFoundException;
 import org.glud.credentials.security.exception.RoleRequiredException;
 import org.glud.credentials.security.middleware.RequiredAuth;
 import org.junit.jupiter.api.Test;
@@ -23,6 +24,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -32,7 +34,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class GuestControllerTest {
 
     private static final GuestResponseDTO GUEST_DTO = new GuestResponseDTO(
-            5L, "101011000", "Invitada Uno", "inv1@mail.com", GuestStatus.ACTIVE, 1L, "GLUD", 10L, "20210000001", null);
+            5L, "101011000", "Invitada Uno", "inv1@mail.com", GuestStatus.ACTIVE, 1L, "GLUD", 10L, "20210000001", null, null);
 
     private static final String VALID_BODY = """
             {
@@ -118,5 +120,25 @@ class GuestControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(VALID_BODY))
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser
+    void getCurrent_returns200WithGuest() throws Exception {
+        when(guestService.getCurrentGuest()).thenReturn(GUEST_DTO);
+
+        mockMvc.perform(get("/api/guests/current"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(5))
+                .andExpect(jsonPath("$.status").value("ACTIVE"));
+    }
+
+    @Test
+    @WithMockUser
+    void getCurrent_returns404_whenNoActiveGuest() throws Exception {
+        when(guestService.getCurrentGuest()).thenThrow(new GuestNotFoundException(10L));
+
+        mockMvc.perform(get("/api/guests/current"))
+                .andExpect(status().isNotFound());
     }
 }

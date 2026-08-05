@@ -14,5 +14,7 @@ public interface GuestRepository extends JpaRepository<Guest, Long> {
 
     boolean existsByCreatedByUserIdAndStatus(Long userId, GuestStatus status);
 
+    Optional<Guest> findByCreatedByUserIdAndStatus(Long userId, GuestStatus status);
+
     Optional<Guest> findByCodigoAndTenantTenantId(String codigo, Long tenantId);
 }
