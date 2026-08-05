@@ -20,6 +20,7 @@ public class SecurityConfig {
 
     private final RequiredAuth requiredAuth;
     private final AuthEntryPointJwt authEntryPointJwt;
+    private final AccessDeniedHandlerJwt accessDeniedHandlerJwt;
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
@@ -30,10 +31,13 @@ public class SecurityConfig {
         http
                 .cors(Customizer.withDefaults())
                 .csrf(AbstractHttpConfigurer::disable)
-                .exceptionHandling(exception -> exception.authenticationEntryPoint(authEntryPointJwt))
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint(authEntryPointJwt)
+                        .accessDeniedHandler(accessDeniedHandlerJwt))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/tenants/**").hasRole("SUPER_ADMIN")
+                        .requestMatchers("/error").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(requiredAuth, UsernamePasswordAuthenticationFilter.class);
