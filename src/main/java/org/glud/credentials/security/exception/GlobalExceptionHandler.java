@@ -20,6 +20,11 @@ public class GlobalExceptionHandler {
         return error(ex.getMessage(), HttpStatus.NOT_FOUND);
     }
 
+    @ExceptionHandler(MemberNotFoundException.class)
+    public ResponseEntity<ApiError> handleMemberNotFound(MemberNotFoundException ex) {
+        return error(ex.getMessage(), HttpStatus.NOT_FOUND);
+    }
+
     @ExceptionHandler(TenantAlreadyExistsException.class)
     public ResponseEntity<ApiError> handleTenantAlreadyExists(TenantAlreadyExistsException ex) {
         return error(ex.getMessage(), HttpStatus.CONFLICT);
