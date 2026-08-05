@@ -10,6 +10,7 @@ import org.glud.credentials.auth.dto.GuestResponseDTO;
 import org.glud.credentials.auth.service.GuestService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -37,5 +38,20 @@ public class GuestController {
     })
     public ResponseEntity<GuestResponseDTO> create(@RequestBody @Valid CreateGuestRequestDTO request) {
         return new ResponseEntity<>(guestService.create(request), HttpStatus.CREATED);
+    }
+
+    @GetMapping("/current")
+    @Operation(
+            summary = "Obtiene el invitado activo del miembro autenticado",
+            description = "Devuelve el invitado activo creado por el miembro autenticado, junto con la " +
+                    "semilla TOTP derivada para mostrar su credencial temporal. 404 si no tiene invitado activo."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Invitado activo obtenido correctamente"),
+            @ApiResponse(responseCode = "401", description = "No autenticado"),
+            @ApiResponse(responseCode = "404", description = "El miembro no tiene un invitado activo")
+    })
+    public ResponseEntity<GuestResponseDTO> getCurrent() {
+        return new ResponseEntity<>(guestService.getCurrentGuest(), HttpStatus.OK);
     }
 }

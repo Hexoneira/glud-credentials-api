@@ -15,9 +15,14 @@ public record GuestResponseDTO(
         String tenantName,
         Long createdById,
         String createdByCodigo,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        String totpSecret
 ) {
     public static GuestResponseDTO from(Guest guest) {
+        return from(guest, null);
+    }
+
+    public static GuestResponseDTO from(Guest guest, String totpSecret) {
         return new GuestResponseDTO(
                 guest.getGuestId(),
                 guest.getCodigo(),
@@ -28,7 +33,8 @@ public record GuestResponseDTO(
                 guest.getTenant().getName(),
                 guest.getCreatedBy().getUserId(),
                 guest.getCreatedBy().getCodigo(),
-                guest.getCreatedAt()
+                guest.getCreatedAt(),
+                totpSecret
         );
     }
 }

@@ -15,8 +15,10 @@ import org.glud.credentials.security.authorization.RoleGuard;
 import org.glud.credentials.security.components.UserDetailsImpl;
 import org.glud.credentials.security.exception.ActiveGuestAlreadyExistsException;
 import org.glud.credentials.security.exception.GuestLimitExceededException;
+import org.glud.credentials.security.exception.GuestNotFoundException;
 import org.glud.credentials.security.exception.RoleRequiredException;
 import org.glud.credentials.security.exception.TenantNotFoundException;
+import org.glud.credentials.totp_seed.service.TOTPService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -44,6 +46,8 @@ class GuestServiceTest {
     private TenantRepository tenantRepository;
     @Mock
     private UserRepository userRepository;
+    @Mock
+    private TOTPService totpService;
 
     private GuestService guestService;
 
@@ -51,7 +55,7 @@ class GuestServiceTest {
 
     @BeforeEach
     void setUp() {
-        guestService = new GuestService(guestRepository, tenantRepository, userRepository, roleGuard);
+        guestService = new GuestService(guestRepository, tenantRepository, userRepository, roleGuard, totpService);
         ReflectionTestUtils.setField(guestService, "maxActiveGuests", 15);
     }
 
@@ -72,6 +76,7 @@ class GuestServiceTest {
         Tenant tenant = new Tenant();
         tenant.setTenantId(id);
         tenant.setName("GLUD");
+        tenant.setTenantCode("GLUD");
         return tenant;
     }
 
@@ -172,5 +177,33 @@ class GuestServiceTest {
         CreateGuestRequestDTO request = new CreateGuestRequestDTO("101011000", "Invitada Uno", null);
 
         assertThrows(TenantNotFoundException.class, () -> guestService.create(request));
+    }
+
+    @Test
+    void getCurrentGuest_returnsActiveGuestWithDerivedSeed() throws Exception {
+        authenticate(10L, 1L, Rol.MIEMBRO);
+        Guest guest = new Guest();
+        guest.setGuestId(5L);
+        guest.setCodigo("101011000");
+        guest.setName("Invitada Uno");
+        guest.setTenant(tenant(1L));
+        guest.setStatus(GuestStatus.ACTIVE);
+        guest.setCreatedBy(member(10L));
+        when(guestRepository.findByCreatedByUserIdAndStatus(10L, GuestStatus.ACTIVE)).thenReturn(Optional.of(guest));
+        when(totpService.generateSeed("101011000", "GLUD")).thenReturn("seed-guest");
+
+        GuestResponseDTO result = guestService.getCurrentGuest();
+
+        assertEquals(5L, result.id());
+        assertEquals(GuestStatus.ACTIVE, result.status());
+        assertEquals("seed-guest", result.totpSecret());
+    }
+
+    @Test
+    void getCurrentGuest_throwsNotFound_whenNoActiveGuest() {
+        authenticate(10L, 1L, Rol.MIEMBRO);
+        when(guestRepository.findByCreatedByUserIdAndStatus(10L, GuestStatus.ACTIVE)).thenReturn(Optional.empty());
+
+        assertThrows(GuestNotFoundException.class, () -> guestService.getCurrentGuest());
     }
 }

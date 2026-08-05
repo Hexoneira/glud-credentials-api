@@ -25,6 +25,11 @@ public class GlobalExceptionHandler {
         return error(ex.getMessage(), HttpStatus.NOT_FOUND);
     }
 
+    @ExceptionHandler(GuestNotFoundException.class)
+    public ResponseEntity<ApiError> handleGuestNotFound(GuestNotFoundException ex) {
+        return error(ex.getMessage(), HttpStatus.NOT_FOUND);
+    }
+
     @ExceptionHandler(TenantAlreadyExistsException.class)
     public ResponseEntity<ApiError> handleTenantAlreadyExists(TenantAlreadyExistsException ex) {
         return error(ex.getMessage(), HttpStatus.CONFLICT);
