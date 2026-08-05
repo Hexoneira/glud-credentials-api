@@ -60,6 +60,16 @@ public class GlobalExceptionHandler {
         return error(ex.getMessage(), HttpStatus.CONFLICT);
     }
 
+    @ExceptionHandler(ActiveGuestAlreadyExistsException.class)
+    public ResponseEntity<ApiError> handleActiveGuestAlreadyExists(ActiveGuestAlreadyExistsException ex) {
+        return error(ex.getMessage(), HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler(GuestLimitExceededException.class)
+    public ResponseEntity<ApiError> handleGuestLimitExceeded(GuestLimitExceededException ex) {
+        return error(ex.getMessage(), HttpStatus.FORBIDDEN);
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiError> handleValidation(MethodArgumentNotValidException ex) {
         return error("Datos inválidos", HttpStatus.BAD_REQUEST);
