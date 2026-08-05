@@ -1,6 +1,7 @@
 totp:
   secret: test-secret-value
   tenant: TESTAPP
+  window: 1
 jwt:
   secret: k5oD8hP5mWg9p5NzT5y8aTU1DpxHiP7xWROpNuXIkub
   expiration: 86400000
