@@ -7,6 +7,7 @@ import org.glud.credentials.auth.model.User;
 import org.glud.credentials.auth.repository.UserRepository;
 import org.glud.credentials.auth.service.MemberService;
 import org.glud.credentials.security.exception.MemberNotFoundException;
+import org.glud.credentials.totp_seed.service.TOTPService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -24,8 +25,13 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class MemberServiceTest {
 
+    private static final String SEED = "4ljjwnrzlorsnlhdmitrl4rubdftyhc64bt3qqsnhjbdbq2uqyhq";
+
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private TOTPService totpService;
 
     @InjectMocks
     private MemberService memberService;
@@ -34,6 +40,7 @@ class MemberServiceTest {
         Tenant tenant = new Tenant();
         tenant.setTenantId(1L);
         tenant.setName("GLUD");
+        tenant.setTenantCode("GLUD");
 
         User user = new User();
         user.setUserId(5L);
@@ -47,8 +54,9 @@ class MemberServiceTest {
     }
 
     @Test
-    void getCurrentMember_returnsMappedCredential() {
+    void getCurrentMember_returnsMappedCredentialWithSeed() throws Exception {
         when(userRepository.findById(5L)).thenReturn(Optional.of(member()));
+        when(totpService.generateSeed("20210000000", "GLUD")).thenReturn(SEED);
 
         MemberCurrentResponseDTO result = memberService.getCurrentMember(5L);
 
@@ -58,7 +66,7 @@ class MemberServiceTest {
         assertEquals("MIEMBRO", result.role());
         assertEquals(List.of("GLUD"), result.groups());
         assertNull(result.icon());
-        assertNull(result.totpSecret());
+        assertEquals(SEED, result.totpSecret());
     }
 
     @Test

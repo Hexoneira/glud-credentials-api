@@ -14,6 +14,10 @@ public record MemberCurrentResponseDTO(
         String totpSecret
 ) {
     public static MemberCurrentResponseDTO from(User user) {
+        return from(user, null);
+    }
+
+    public static MemberCurrentResponseDTO from(User user, String totpSecret) {
         return new MemberCurrentResponseDTO(
                 user.getCodigo(),
                 user.getCodigo(),
@@ -21,7 +25,7 @@ public record MemberCurrentResponseDTO(
                 user.getRol().name(),
                 List.of(user.getTenant().getName()),
                 null,
-                null
+                totpSecret
         );
     }
 }
