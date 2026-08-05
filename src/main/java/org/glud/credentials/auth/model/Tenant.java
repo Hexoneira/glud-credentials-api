@@ -25,4 +25,7 @@ public class Tenant {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private TenantStatus status = TenantStatus.ACTIVE;
+    @Column(nullable = false, length = 20)
+    private String primaryColor = "#22fefb";
+    private String logoUrl;
 }

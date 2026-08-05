@@ -36,6 +36,7 @@ public class SecurityConfig {
                         .accessDeniedHandler(accessDeniedHandlerJwt))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/guests/access/**").permitAll()
                         .requestMatchers("/api/tenants/**").hasRole("SUPER_ADMIN")
                         .requestMatchers("/api/members/**").hasAnyRole("SUPER_ADMIN", "TENANT_ADMIN")
                         .requestMatchers("/error").permitAll()

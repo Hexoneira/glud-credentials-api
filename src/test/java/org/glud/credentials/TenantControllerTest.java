@@ -41,7 +41,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class TenantControllerTest {
 
     private static final TenantResponseDTO TENANT_DTO = new TenantResponseDTO(
-            1L, "GLUD", "GLUD", "Directora GLUD", 100, 3L, TenantStatus.ACTIVE);
+            1L, "GLUD", "GLUD", "Directora GLUD", 100, 3L, TenantStatus.ACTIVE, "#22fefb", null);
 
     private static final String VALID_CREATE_BODY = """
             {
@@ -170,7 +170,7 @@ class TenantControllerTest {
     @WithMockUser
     void suspend_returns200WithSuspendedTenant() throws Exception {
         TenantResponseDTO suspended = new TenantResponseDTO(
-                1L, "GLUD", "GLUD", "Directora GLUD", 100, 3L, TenantStatus.SUSPENDED);
+                1L, "GLUD", "GLUD", "Directora GLUD", 100, 3L, TenantStatus.SUSPENDED, "#22fefb", null);
         when(tenantService.suspend(1L)).thenReturn(suspended);
 
         mockMvc.perform(patch("/api/tenants/1/suspend"))

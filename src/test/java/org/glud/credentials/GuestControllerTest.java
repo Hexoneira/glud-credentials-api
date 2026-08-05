@@ -9,6 +9,7 @@ import org.glud.credentials.auth.service.GuestService;
 import org.glud.credentials.security.components.JwtUtils;
 import org.glud.credentials.security.exception.ActiveGuestAlreadyExistsException;
 import org.glud.credentials.security.exception.GuestLimitExceededException;
+import org.glud.credentials.security.exception.GuestLinkExpiredException;
 import org.glud.credentials.security.exception.GuestNotFoundException;
 import org.glud.credentials.security.exception.RoleRequiredException;
 import org.glud.credentials.security.middleware.RequiredAuth;
@@ -20,6 +21,8 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+
+import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
@@ -34,7 +37,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class GuestControllerTest {
 
     private static final GuestResponseDTO GUEST_DTO = new GuestResponseDTO(
-            5L, "101011000", "Invitada Uno", "inv1@mail.com", GuestStatus.ACTIVE, 1L, "GLUD", 10L, "20210000001", null, null);
+            5L, "101011000", "Invitada Uno", "inv1@mail.com", GuestStatus.ACTIVE, 1L, "GLUD", "GLUD", "#22fefb", null,
+            10L, "20210000001", null, null, "tok123", null);
 
     private static final String VALID_BODY = """
             {
@@ -139,6 +143,43 @@ class GuestControllerTest {
         when(guestService.getCurrentGuest()).thenThrow(new GuestNotFoundException(10L));
 
         mockMvc.perform(get("/api/guests/current"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @WithMockUser
+    void listMine_returns200WithGuestList() throws Exception {
+        when(guestService.listMyGuests()).thenReturn(List.of(GUEST_DTO));
+
+        mockMvc.perform(get("/api/guests"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(5))
+                .andExpect(jsonPath("$[0].status").value("ACTIVE"));
+    }
+
+    @Test
+    void access_returns200WithGuest() throws Exception {
+        when(guestService.accessGuest("tok123")).thenReturn(GUEST_DTO);
+
+        mockMvc.perform(get("/api/guests/access/tok123"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(5))
+                .andExpect(jsonPath("$.codigo").value("101011000"));
+    }
+
+    @Test
+    void access_returns410_whenLinkExpired() throws Exception {
+        when(guestService.accessGuest("tok123")).thenThrow(new GuestLinkExpiredException());
+
+        mockMvc.perform(get("/api/guests/access/tok123"))
+                .andExpect(status().isGone());
+    }
+
+    @Test
+    void access_returns404_whenUnknownToken() throws Exception {
+        when(guestService.accessGuest("nope")).thenThrow(new GuestNotFoundException());
+
+        mockMvc.perform(get("/api/guests/access/nope"))
                 .andExpect(status().isNotFound());
     }
 }

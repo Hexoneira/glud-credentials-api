@@ -74,7 +74,7 @@ class TenantServiceTest {
             return saved;
         });
 
-        CreateTenantRequestDTO request = new CreateTenantRequestDTO("Nuevo Grupo", "NVO", "Nueva Directora", 50);
+        CreateTenantRequestDTO request = new CreateTenantRequestDTO("Nuevo Grupo", "NVO", "Nueva Directora", 50, null, null);
 
         TenantResponseDTO result = tenantService.create(request);
 
@@ -91,10 +91,44 @@ class TenantServiceTest {
     void create_throwsAlreadyExists_whenTenantCodeExists() {
         when(tenantRepository.existsByTenantCode("NVO")).thenReturn(true);
 
-        CreateTenantRequestDTO request = new CreateTenantRequestDTO("Nuevo Grupo", "NVO", "Directora", 50);
+        CreateTenantRequestDTO request = new CreateTenantRequestDTO("Nuevo Grupo", "NVO", "Directora", 50, null, null);
 
         assertThrows(TenantAlreadyExistsException.class, () -> tenantService.create(request));
         verify(tenantRepository, never()).save(any());
+    }
+
+    @Test
+    void create_normalizesAndPersistsTheme() {
+        when(tenantRepository.existsByTenantCode("NVO")).thenReturn(false);
+        when(tenantRepository.save(any(Tenant.class))).thenAnswer(invocation -> {
+            Tenant saved = invocation.getArgument(0);
+            saved.setTenantId(7L);
+            return saved;
+        });
+
+        CreateTenantRequestDTO request = new CreateTenantRequestDTO("Nuevo Grupo", "NVO", "Directora", 50, "ff0000", "https://logo.udistrital.edu.co/glud.png");
+
+        TenantResponseDTO result = tenantService.create(request);
+
+        assertEquals("#ff0000", result.primaryColor());
+        assertEquals("https://logo.udistrital.edu.co/glud.png", result.logoUrl());
+    }
+
+    @Test
+    void create_usesDefaultColor_whenThemeNotProvided() {
+        when(tenantRepository.existsByTenantCode("NVO")).thenReturn(false);
+        when(tenantRepository.save(any(Tenant.class))).thenAnswer(invocation -> {
+            Tenant saved = invocation.getArgument(0);
+            saved.setTenantId(7L);
+            return saved;
+        });
+
+        CreateTenantRequestDTO request = new CreateTenantRequestDTO("Nuevo Grupo", "NVO", "Directora", 50, null, null);
+
+        TenantResponseDTO result = tenantService.create(request);
+
+        assertEquals("#22fefb", result.primaryColor());
+        assertNull(result.logoUrl());
     }
 
     @Test
@@ -103,7 +137,7 @@ class TenantServiceTest {
         when(tenantRepository.findById(1L)).thenReturn(Optional.of(tenant));
         when(tenantRepository.save(any(Tenant.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        UpdateTenantRequestDTO request = new UpdateTenantRequestDTO("Actualizado", null, 120);
+        UpdateTenantRequestDTO request = new UpdateTenantRequestDTO("Actualizado", null, 120, null, null);
 
         TenantResponseDTO result = tenantService.update(1L, request);
 
@@ -120,7 +154,7 @@ class TenantServiceTest {
         when(tenantRepository.findById(1L)).thenReturn(Optional.of(tenant));
         when(tenantRepository.save(any(Tenant.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        UpdateTenantRequestDTO request = new UpdateTenantRequestDTO(null, "Nueva Directora", null);
+        UpdateTenantRequestDTO request = new UpdateTenantRequestDTO(null, "Nueva Directora", null, null, null);
 
         TenantResponseDTO result = tenantService.update(1L, request);
 
@@ -134,7 +168,7 @@ class TenantServiceTest {
     void update_throwsNotFound_whenTenantMissing() {
         when(tenantRepository.findById(1L)).thenReturn(Optional.empty());
 
-        UpdateTenantRequestDTO request = new UpdateTenantRequestDTO("Actualizado", "Directora", 100);
+        UpdateTenantRequestDTO request = new UpdateTenantRequestDTO("Actualizado", "Directora", 100, null, null);
 
         assertThrows(TenantNotFoundException.class, () -> tenantService.update(1L, request));
     }

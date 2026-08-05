@@ -10,9 +10,13 @@ app:
       allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:4321}
    guest:
       max-active: ${GUEST_MAX_ACTIVE:15}
+      access-duration: ${GUEST_ACCESS_DURATION:PT2H}
+      retention: ${GUEST_RETENTION:P21D}
 spring:
    application:
      name: credentials
+   config:
+     import: optional:file:.env[.properties]
    datasource:
      url: ${DB_URL:jdbc:postgresql://localhost:5432/credentials}
      username: ${DB_USERNAME:postgres}

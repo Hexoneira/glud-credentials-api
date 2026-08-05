@@ -30,6 +30,11 @@ public class GlobalExceptionHandler {
         return error(ex.getMessage(), HttpStatus.NOT_FOUND);
     }
 
+    @ExceptionHandler(GuestLinkExpiredException.class)
+    public ResponseEntity<ApiError> handleGuestLinkExpired(GuestLinkExpiredException ex) {
+        return error(ex.getMessage(), HttpStatus.GONE);
+    }
+
     @ExceptionHandler(TenantAlreadyExistsException.class)
     public ResponseEntity<ApiError> handleTenantAlreadyExists(TenantAlreadyExistsException ex) {
         return error(ex.getMessage(), HttpStatus.CONFLICT);

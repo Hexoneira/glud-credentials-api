@@ -43,6 +43,9 @@ public class Guest {
     private GuestStatus status = GuestStatus.ACTIVE;
     @Column(nullable = false)
     private LocalDateTime createdAt;
+    @Column(unique = true, length = 128)
+    private String accessToken;
+    private LocalDateTime expiresAt;
 
     @PrePersist
     void prePersist() {

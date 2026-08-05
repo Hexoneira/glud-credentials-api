@@ -1,0 +1,2 @@
+ALTER TABLE tenants ADD COLUMN primary_color VARCHAR(20) NOT NULL DEFAULT '#22fefb';
+ALTER TABLE tenants ADD COLUMN logo_url VARCHAR(255);

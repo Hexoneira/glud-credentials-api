@@ -19,6 +19,10 @@ public record CreateTenantRequestDTO(
         @NotNull
         @Min(1)
         @Max(1000)
-        Integer memberLimit
+        Integer memberLimit,
+        @Pattern(regexp = "^#?[0-9A-Fa-f]{6}$")
+        String primaryColor,
+        @Size(max = 255)
+        String logoUrl
 ) {
 }

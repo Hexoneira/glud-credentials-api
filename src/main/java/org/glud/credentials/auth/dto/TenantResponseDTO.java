@@ -10,7 +10,9 @@ public record TenantResponseDTO(
         String director,
         Integer memberLimit,
         long currentMembers,
-        TenantStatus status
+        TenantStatus status,
+        String primaryColor,
+        String logoUrl
 ) {
     public static TenantResponseDTO from(Tenant tenant, long currentMembers) {
         return new TenantResponseDTO(
@@ -20,7 +22,9 @@ public record TenantResponseDTO(
                 tenant.getDirector(),
                 tenant.getMemberLimit(),
                 currentMembers,
-                tenant.getStatus()
+                tenant.getStatus(),
+                tenant.getPrimaryColor(),
+                tenant.getLogoUrl()
         );
     }
 }

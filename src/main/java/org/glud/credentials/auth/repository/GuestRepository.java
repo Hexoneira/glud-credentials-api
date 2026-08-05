@@ -5,6 +5,8 @@ import org.glud.credentials.auth.model.GuestStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -17,4 +19,10 @@ public interface GuestRepository extends JpaRepository<Guest, Long> {
     Optional<Guest> findByCreatedByUserIdAndStatus(Long userId, GuestStatus status);
 
     Optional<Guest> findByCodigoAndTenantTenantId(String codigo, Long tenantId);
+
+    Optional<Guest> findByAccessToken(String accessToken);
+
+    List<Guest> findAllByCreatedByUserIdOrderByCreatedAtDesc(Long userId);
+
+    void deleteByCreatedAtBefore(LocalDateTime cutoff);
 }

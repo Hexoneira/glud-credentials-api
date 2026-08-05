@@ -32,7 +32,7 @@ class MemberControllerTest {
 
     private static final MemberCurrentResponseDTO MEMBER_DTO = new MemberCurrentResponseDTO(
             "20210000000", "20210000000", "miembro@udistrital.edu.co", "MIEMBRO",
-            List.of("GLUD"), null, null);
+            List.of("GLUD"), null, null, "GLUD", "GLUD", "#22fefb", null);
 
     @Autowired
     private MockMvc mockMvc;
