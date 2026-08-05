@@ -45,6 +45,21 @@ public class GlobalExceptionHandler {
         return error(ex.getMessage(), HttpStatus.FORBIDDEN);
     }
 
+    @ExceptionHandler(CrossTenantAccessException.class)
+    public ResponseEntity<ApiError> handleCrossTenantAccess(CrossTenantAccessException ex) {
+        return error(ex.getMessage(), HttpStatus.FORBIDDEN);
+    }
+
+    @ExceptionHandler(MemberAlreadyExistsException.class)
+    public ResponseEntity<ApiError> handleMemberAlreadyExists(MemberAlreadyExistsException ex) {
+        return error(ex.getMessage(), HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler(InvalidMemberActionException.class)
+    public ResponseEntity<ApiError> handleInvalidMemberAction(InvalidMemberActionException ex) {
+        return error(ex.getMessage(), HttpStatus.CONFLICT);
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiError> handleValidation(MethodArgumentNotValidException ex) {
         return error("Datos inválidos", HttpStatus.BAD_REQUEST);
