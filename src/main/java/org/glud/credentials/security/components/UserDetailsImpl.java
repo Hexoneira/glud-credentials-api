@@ -6,10 +6,12 @@ import org.glud.credentials.auth.model.Rol;
 import org.glud.credentials.auth.model.User;
 import org.jspecify.annotations.NullMarked;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 @Getter
 @Setter
@@ -34,9 +36,9 @@ public class UserDetailsImpl implements UserDetails {
     }
 
     public static UserDetailsImpl build(User user) {
-        // Por el momento, los roles y permisos no se han implementado en esta versión.
-        // Devuelve una colección de autorizaciones vacía.
-        Collection<? extends GrantedAuthority> authorities = Collections.emptyList();
+        Collection<? extends GrantedAuthority> authorities = user.getRol() != null
+                ? List.of(new SimpleGrantedAuthority("ROLE_" + user.getRol().name()))
+                : Collections.emptyList();
 
         return new UserDetailsImpl(user.getUserId(), user.getUsername(), user.getPassword(),
                 user.getTenant().getTenantId(), user.getRol(), authorities);

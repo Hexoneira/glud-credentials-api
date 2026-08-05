@@ -1,9 +1,10 @@
 package org.glud.credentials;
 
 import org.glud.credentials.auth.model.Rol;
+import org.glud.credentials.security.authorization.RoleGuard;
 import org.glud.credentials.security.authorization.SuperAdminGuard;
 import org.glud.credentials.security.components.UserDetailsImpl;
-import org.glud.credentials.security.exception.SuperAdminRequiredException;
+import org.glud.credentials.security.exception.RoleRequiredException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -11,11 +12,12 @@ import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.Collections;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class SuperAdminGuardTest {
 
-    private final SuperAdminGuard guard = new SuperAdminGuard();
+    private final SuperAdminGuard guard = new SuperAdminGuard(new RoleGuard());
 
     @AfterEach
     void clearContext() {
@@ -33,19 +35,19 @@ class SuperAdminGuardTest {
     void assertSuperAdmin_throws_whenPrincipalIsNotSuperAdmin() {
         setPrincipal(new UserDetailsImpl(2L, "member", "pw", 1L, Rol.MIEMBRO, Collections.emptyList()));
 
-        assertThrows(SuperAdminRequiredException.class, guard::assertSuperAdmin);
+        assertThrows(RoleRequiredException.class, guard::assertSuperAdmin);
     }
 
     @Test
     void assertSuperAdmin_throws_whenPrincipalIsNotUserDetailsImpl() {
         setPrincipal("anonymous");
 
-        assertThrows(SuperAdminRequiredException.class, guard::assertSuperAdmin);
+        assertThrows(RoleRequiredException.class, guard::assertSuperAdmin);
     }
 
     @Test
     void assertSuperAdmin_throws_whenNoAuthentication() {
-        assertThrows(SuperAdminRequiredException.class, guard::assertSuperAdmin);
+        assertThrows(RoleRequiredException.class, guard::assertSuperAdmin);
     }
 
     private void setPrincipal(Object principal) {
