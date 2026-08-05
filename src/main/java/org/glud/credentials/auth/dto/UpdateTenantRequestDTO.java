@@ -2,6 +2,7 @@ package org.glud.credentials.auth.dto;
 
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 public record UpdateTenantRequestDTO(
@@ -11,6 +12,10 @@ public record UpdateTenantRequestDTO(
         String director,
         @Min(1)
         @Max(1000)
-        Integer memberLimit
+        Integer memberLimit,
+        @Pattern(regexp = "^#?[0-9A-Fa-f]{6}$")
+        String primaryColor,
+        @Size(max = 255)
+        String logoUrl
 ) {
 }

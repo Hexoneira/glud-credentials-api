@@ -11,7 +11,11 @@ public record MemberCurrentResponseDTO(
         String role,
         List<String> groups,
         String icon,
-        String totpSecret
+        String totpSecret,
+        String tenantName,
+        String tenantCode,
+        String primaryColor,
+        String logoUrl
 ) {
     public static MemberCurrentResponseDTO from(User user) {
         return from(user, null);
@@ -25,7 +29,11 @@ public record MemberCurrentResponseDTO(
                 user.getRol().name(),
                 List.of(user.getTenant().getName()),
                 null,
-                totpSecret
+                totpSecret,
+                user.getTenant().getName(),
+                user.getTenant().getTenantCode(),
+                user.getTenant().getPrimaryColor(),
+                user.getTenant().getLogoUrl()
         );
     }
 }

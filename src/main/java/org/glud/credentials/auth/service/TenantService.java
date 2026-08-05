@@ -46,6 +46,8 @@ public class TenantService {
         tenant.setDirector(request.director());
         tenant.setMemberLimit(request.memberLimit());
         tenant.setStatus(TenantStatus.ACTIVE);
+        tenant.setPrimaryColor(normalizeColor(request.primaryColor()));
+        tenant.setLogoUrl(request.logoUrl());
 
         return toResponse(tenantRepository.save(tenant));
     }
@@ -63,6 +65,12 @@ public class TenantService {
         }
         if (request.memberLimit() != null) {
             tenant.setMemberLimit(request.memberLimit());
+        }
+        if (request.primaryColor() != null) {
+            tenant.setPrimaryColor(normalizeColor(request.primaryColor()));
+        }
+        if (request.logoUrl() != null) {
+            tenant.setLogoUrl(request.logoUrl());
         }
 
         return toResponse(tenantRepository.save(tenant));
@@ -103,6 +111,13 @@ public class TenantService {
     private Tenant findOrThrow(Long id) {
         return tenantRepository.findById(id)
                 .orElseThrow(() -> new TenantNotFoundException(id));
+    }
+
+    private String normalizeColor(String color) {
+        if (color == null || color.isBlank()) {
+            return "#22fefb";
+        }
+        return color.startsWith("#") ? color : "#" + color;
     }
 
     private TenantResponseDTO toResponse(Tenant tenant) {

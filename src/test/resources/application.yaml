@@ -10,6 +10,8 @@ app:
     allowed-origins: http://localhost:4321
   guest:
     max-active: 15
+    access-duration: PT2H
+    retention: P21D
 spring:
   datasource:
     url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
