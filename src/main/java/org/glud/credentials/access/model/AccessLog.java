@@ -32,6 +32,8 @@ public class AccessLog {
     @Column(nullable = false)
     private SubjectType subjectType;
     private Long subjectId;
+    @Column(length = 255)
+    private String codigo;
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "tenant_id")
     private Tenant tenant;

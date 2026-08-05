@@ -17,11 +17,12 @@ public class AccessLogService {
     private final AccessLogRepository accessLogRepository;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void record(SubjectType subjectType, Long subjectId, Tenant tenant,
+    public void record(SubjectType subjectType, Long subjectId, String codigo, Tenant tenant,
                        String totpCode, String deviceId, String location, AccessResult result) {
         AccessLog log = new AccessLog();
         log.setSubjectType(subjectType);
         log.setSubjectId(subjectId);
+        log.setCodigo(codigo);
         log.setTenant(tenant);
         log.setTotpCode(totpCode);
         log.setDeviceId(deviceId);

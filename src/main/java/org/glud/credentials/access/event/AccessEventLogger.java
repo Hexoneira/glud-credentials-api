@@ -10,7 +10,7 @@ public class AccessEventLogger {
 
     @EventListener(AccessDecisionEvent.class)
     public void onAccessDecision(AccessDecisionEvent event) {
-        log.info("Acceso {} para subjectId={} ({}) en tenant={}: {}",
-                event.result(), event.subjectId(), event.subjectType(), event.tenantId(), event.message());
+        log.info("Acceso {} para subjectId={} ({}) codigo={} en tenant={}: {}",
+                event.result(), event.subjectId(), event.subjectType(), event.codigo(), event.tenantId(), event.message());
     }
 }

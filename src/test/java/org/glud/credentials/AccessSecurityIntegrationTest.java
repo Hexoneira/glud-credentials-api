@@ -102,7 +102,7 @@ class AccessSecurityIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
-                                  "userId": 1,
+                                  "codigo": "20210000050",
                                   "totpCode": "123456"
                                 }
                                 """))
@@ -111,7 +111,7 @@ class AccessSecurityIntegrationTest {
 
     @Test
     @Transactional
-    void validate_allowsMemberWithRealTotp() throws Exception {
+    void validate_allowsActiveMember() throws Exception {
         User member = createMember("20210000050");
         String token = jwtUtils.generateJwtToken(member.getUserId(), tenant1.getTenantId(), Rol.MIEMBRO);
         String code = currentCode(member.getCodigo());
@@ -121,12 +121,13 @@ class AccessSecurityIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
-                                  "userId": %d,
+                                  "codigo": "%s",
+                                  "subjectType": "MEMBER",
                                   "totpCode": "%s",
                                   "deviceId": "escanner-01",
                                   "location": "Puerta principal"
                                 }
-                                """.formatted(member.getUserId(), code)))
+                                """.formatted(member.getCodigo(), code)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.allowed").value(true));
 
@@ -144,10 +145,11 @@ class AccessSecurityIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
-                                  "userId": %d,
+                                  "codigo": "%s",
+                                  "subjectType": "MEMBER",
                                   "totpCode": "000000"
                                 }
-                                """.formatted(member.getUserId())))
+                                """.formatted(member.getCodigo())))
                 .andExpect(status().isUnauthorized());
 
         assertTrue(hasLogFor(member.getUserId(), AccessResult.DENIED));
@@ -167,10 +169,11 @@ class AccessSecurityIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
-                                  "userId": %d,
+                                  "codigo": "%s",
+                                  "subjectType": "GUEST",
                                   "totpCode": "%s"
                                 }
-                                """.formatted(guest.getGuestId(), code)))
+                                """.formatted(guest.getCodigo(), code)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.allowed").value(true));
 
@@ -189,10 +192,11 @@ class AccessSecurityIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
-                                  "userId": %d,
+                                  "codigo": "%s",
+                                  "subjectType": "GUEST",
                                   "totpCode": "000000"
                                 }
-                                """.formatted(guest.getGuestId())))
+                                """.formatted(guest.getCodigo())))
                 .andExpect(status().isUnauthorized());
 
         assertTrue(hasLogFor(guest.getGuestId(), AccessResult.DENIED));
@@ -200,8 +204,41 @@ class AccessSecurityIntegrationTest {
 
     @Test
     @Transactional
+    void validate_guestDoesNotFallThroughToMemberByIdCollision() throws Exception {
+        User creator = createMember("20210000054");
+        Guest guest = createGuest("101011002", creator, GuestStatus.ACTIVE);
+        String token = jwtUtils.generateJwtToken(creator.getUserId(), tenant1.getTenantId(), Rol.MIEMBRO);
+        String code = currentCode(guest.getCodigo());
+
+        mockMvc.perform(post("/api/access/validate")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "codigo": "%s",
+                                  "subjectType": "GUEST",
+                                  "totpCode": "%s"
+                                }
+                                """.formatted(guest.getCodigo(), code)))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post("/api/access/validate")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "codigo": "%s",
+                                  "subjectType": "MEMBER",
+                                  "totpCode": "%s"
+                                }
+                                """.formatted(guest.getCodigo(), code)))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @Transactional
     void validate_unknownSubjectIsLoggedAsDenied() throws Exception {
-        User member = createMember("20210000054");
+        User member = createMember("20210000055");
         String token = jwtUtils.generateJwtToken(member.getUserId(), tenant1.getTenantId(), Rol.MIEMBRO);
 
         mockMvc.perform(post("/api/access/validate")
@@ -209,7 +246,8 @@ class AccessSecurityIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
-                                  "userId": 999999,
+                                  "codigo": "999999",
+                                  "subjectType": "MEMBER",
                                   "totpCode": "000000"
                                 }
                                 """))

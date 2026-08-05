@@ -31,7 +31,8 @@ class AccessControllerTest {
 
     private static final String VALID_BODY = """
             {
-              "userId": 1,
+              "codigo": "20210000001",
+              "subjectType": "MEMBER",
               "totpCode": "123456",
               "deviceId": "escanner-01",
               "location": "Puerta principal"
@@ -62,6 +63,25 @@ class AccessControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.allowed").value(true))
                 .andExpect(jsonPath("$.message").value("Acceso permitido"));
+    }
+
+    @Test
+    @WithMockUser
+    void validate_returns200WhenGuestWithoutSubjectType() throws Exception {
+        when(accessService.validate(any(AccessRequestDTO.class)))
+                .thenReturn(new AccessValidationResponseDTO(true, "Acceso permitido", LocalDateTime.now()));
+
+        String guestBody = """
+                {
+                  "codigo": "101011000",
+                  "totpCode": "123456"
+                }
+                """;
+
+        mockMvc.perform(post("/api/access/validate")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(guestBody))
+                .andExpect(status().isOk());
     }
 
     @Test
@@ -97,8 +117,25 @@ class AccessControllerTest {
     void validate_returns400_whenTotpCodeNotNumeric() throws Exception {
         String invalidBody = """
                 {
-                  "userId": 1,
+                  "codigo": "20210000001",
                   "totpCode": "abcdef"
+                }
+                """;
+
+        mockMvc.perform(post("/api/access/validate")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(invalidBody))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser
+    void validate_returns400_whenSubjectTypeUnknown() throws Exception {
+        String invalidBody = """
+                {
+                  "codigo": "20210000001",
+                  "subjectType": "ROBOT",
+                  "totpCode": "123456"
                 }
                 """;
 

@@ -9,6 +9,7 @@ public record AccessDecisionEvent(
         Long subjectId,
         SubjectType subjectType,
         Long tenantId,
+        String codigo,
         AccessResult result,
         String message,
         LocalDateTime timestamp
