@@ -1,6 +1,7 @@
 totp:
    secret: ${RANDOM_SEED}
    tenant: ${TENANT}
+   window: ${TOTP_WINDOW:1}
 jwt:
    secret: ${JWT_SECRET}
    expiration: ${JWT_EXPIRATION}
