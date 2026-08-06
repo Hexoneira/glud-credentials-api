@@ -39,6 +39,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/guests/access/**").permitAll()
                         .requestMatchers("/api/tenants/**").hasRole("SUPER_ADMIN")
                         .requestMatchers("/api/members/**").hasAnyRole("SUPER_ADMIN", "TENANT_ADMIN")
+                        .requestMatchers("/api/attendance/**").hasAnyRole("SUPER_ADMIN", "TENANT_ADMIN")
                         .requestMatchers("/error").permitAll()
                         .anyRequest().authenticated()
                 )
