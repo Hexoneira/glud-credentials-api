@@ -1,5 +1,6 @@
 package org.glud.credentials.auth.repository;
 
+import org.glud.credentials.auth.model.Rol;
 import org.glud.credentials.auth.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -16,6 +17,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
     boolean existsByCodigo(String codigo);
 
     long countByTenantTenantId(Long tenantId);
+
+    long countByTenantTenantIdAndRol(Long tenantId, Rol rol);
 
     List<User> findByTenantTenantId(Long tenantId);
 }
