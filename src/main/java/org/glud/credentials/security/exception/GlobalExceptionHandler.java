@@ -70,6 +70,16 @@ public class GlobalExceptionHandler {
         return error(ex.getMessage(), HttpStatus.CONFLICT);
     }
 
+    @ExceptionHandler(InvalidScannedCodeException.class)
+    public ResponseEntity<ApiError> handleInvalidScannedCode(InvalidScannedCodeException ex) {
+        return error(ex.getMessage(), HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(AttendanceAlreadyExistsException.class)
+    public ResponseEntity<ApiError> handleAttendanceAlreadyExists(AttendanceAlreadyExistsException ex) {
+        return error(ex.getMessage(), HttpStatus.CONFLICT);
+    }
+
     @ExceptionHandler(ActiveGuestAlreadyExistsException.class)
     public ResponseEntity<ApiError> handleActiveGuestAlreadyExists(ActiveGuestAlreadyExistsException ex) {
         return error(ex.getMessage(), HttpStatus.CONFLICT);
