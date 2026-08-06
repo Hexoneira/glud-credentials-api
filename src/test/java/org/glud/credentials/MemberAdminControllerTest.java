@@ -30,6 +30,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -70,13 +71,24 @@ class MemberAdminControllerTest {
     @Test
     @WithMockUser
     void findAll_returnsListOfMembers() throws Exception {
-        when(memberAdminService.findAll()).thenReturn(List.of(MEMBER_DTO));
+        when(memberAdminService.findAll(null)).thenReturn(List.of(MEMBER_DTO));
 
         mockMvc.perform(get("/api/members"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1))
                 .andExpect(jsonPath("$[0].codigo").value("20210000002"))
                 .andExpect(jsonPath("$[0].tenantId").value(1));
+    }
+
+    @Test
+    @WithMockUser
+    void findAll_passesTenantIdQueryParam() throws Exception {
+        when(memberAdminService.findAll(5L)).thenReturn(List.of(MEMBER_DTO));
+
+        mockMvc.perform(get("/api/members").param("tenantId", "5"))
+                .andExpect(status().isOk());
+
+        verify(memberAdminService).findAll(5L);
     }
 
     @Test
@@ -235,7 +247,7 @@ class MemberAdminControllerTest {
     @WithMockUser
     void anyEndpoint_returns403_whenNotAdmin() throws Exception {
         doThrow(new RoleRequiredException(Rol.TENANT_ADMIN, Rol.SUPER_ADMIN))
-                .when(memberAdminService).findAll();
+                .when(memberAdminService).findAll(null);
 
         mockMvc.perform(get("/api/members"))
                 .andExpect(status().isForbidden());

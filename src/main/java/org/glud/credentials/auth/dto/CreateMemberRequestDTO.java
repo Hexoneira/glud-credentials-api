@@ -17,6 +17,7 @@ public record CreateMemberRequestDTO(
         @Email
         String email,
         @NotNull
-        Rol rol
+        Rol rol,
+        Long tenantId
 ) {
 }

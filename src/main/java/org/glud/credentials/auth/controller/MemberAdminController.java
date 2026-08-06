@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -34,14 +35,15 @@ public class MemberAdminController {
     @GetMapping
     @Operation(
             summary = "Lista los miembros del grupo",
-            description = "Devuelve los miembros del grupo de trabajo al que pertenece el administrador autenticado"
+            description = "Devuelve los miembros del grupo de trabajo. El admin de grupo solo ve su propio tenant; el super admin puede filtrar por tenantId o ver todos"
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Lista de miembros obtenida correctamente"),
             @ApiResponse(responseCode = "403", description = "Se requieren permisos de administrador de grupo")
     })
-    public ResponseEntity<List<MemberResponseDTO>> findAll() {
-        return new ResponseEntity<>(memberAdminService.findAll(), HttpStatus.OK);
+    public ResponseEntity<List<MemberResponseDTO>> findAll(
+            @RequestParam(required = false) Long tenantId) {
+        return new ResponseEntity<>(memberAdminService.findAll(tenantId), HttpStatus.OK);
     }
 
     @PostMapping

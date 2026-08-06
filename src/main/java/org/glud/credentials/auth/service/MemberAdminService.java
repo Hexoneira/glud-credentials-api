@@ -31,14 +31,26 @@ import java.util.List;
 @RequiredArgsConstructor
 public class MemberAdminService {
 
+    public static final int MAX_ADMINS_PER_TENANT = 2;
+
     private final UserRepository userRepository;
     private final TenantRepository tenantRepository;
     private final PasswordEncoder passwordEncoder;
     private final RoleGuard roleGuard;
 
     @Transactional(readOnly = true)
-    public List<MemberResponseDTO> findAll() {
+    public List<MemberResponseDTO> findAll(Long tenantId) {
         roleGuard.assertRole(Rol.TENANT_ADMIN, Rol.SUPER_ADMIN);
+        if (currentIsSuperAdmin()) {
+            if (tenantId != null) {
+                return userRepository.findByTenantTenantId(tenantId).stream()
+                        .map(MemberResponseDTO::from)
+                        .toList();
+            }
+            return userRepository.findAll().stream()
+                    .map(MemberResponseDTO::from)
+                    .toList();
+        }
         return userRepository.findByTenantTenantId(currentTenantId()).stream()
                 .map(MemberResponseDTO::from)
                 .toList();
@@ -47,15 +59,16 @@ public class MemberAdminService {
     @Transactional
     public MemberResponseDTO create(CreateMemberRequestDTO request) {
         roleGuard.assertRole(Rol.TENANT_ADMIN, Rol.SUPER_ADMIN);
-        if (request.rol() == Rol.SUPER_ADMIN) {
-            throw new InvalidMemberActionException("No se puede asignar el rol SUPER_ADMIN a un miembro");
+
+        if (request.rol() == Rol.SUPER_ADMIN && !currentIsSuperAdmin()) {
+            throw new InvalidMemberActionException("Solo el super admin puede otorgar el rol SUPER_ADMIN");
         }
         if (userRepository.existsByCodigo(request.codigo())) {
             throw new MemberAlreadyExistsException("Ya existe un miembro con el código " + request.codigo());
         }
 
-        Tenant tenant = tenantRepository.findById(currentTenantId())
-                .orElseThrow(() -> new TenantNotFoundException(currentTenantId()));
+        Tenant tenant = resolveTenant(request.tenantId());
+        assertAdminLimit(tenant.getTenantId(), request.rol());
 
         User user = new User();
         user.setCodigo(request.codigo());
@@ -72,11 +85,19 @@ public class MemberAdminService {
     @Transactional
     public MemberResponseDTO update(Long id, UpdateMemberRequestDTO request) {
         roleGuard.assertRole(Rol.TENANT_ADMIN, Rol.SUPER_ADMIN);
-        User user = findInTenant(id);
+        User user = findById(id);
+
         if (request.rol() != null) {
-            if (request.rol() == Rol.SUPER_ADMIN) {
-                throw new InvalidMemberActionException("No se puede asignar el rol SUPER_ADMIN a un miembro");
+            if (id.equals(currentUserId())) {
+                throw new InvalidMemberActionException("No puede cambiar su propio rol");
             }
+            if (request.rol() == Rol.SUPER_ADMIN && !currentIsSuperAdmin()) {
+                throw new InvalidMemberActionException("Solo el super admin puede otorgar el rol SUPER_ADMIN");
+            }
+            if (!currentIsSuperAdmin() && user.getRol() == Rol.SUPER_ADMIN) {
+                throw new CrossTenantAccessException();
+            }
+            assertAdminLimit(user.getTenant().getTenantId(), request.rol());
             user.setRol(request.rol());
         }
         if (request.email() != null) {
@@ -88,8 +109,13 @@ public class MemberAdminService {
     @Transactional
     public MemberResponseDTO updateStatus(Long id, UpdateMemberStatusRequestDTO request) {
         roleGuard.assertRole(Rol.TENANT_ADMIN, Rol.SUPER_ADMIN);
-        User user = findInTenant(id);
+        User user = findById(id);
         assertNotSelf(id);
+        if (!currentIsSuperAdmin()) {
+            if (user.getRol() == Rol.SUPER_ADMIN || user.getRol() == Rol.TENANT_ADMIN) {
+                throw new InvalidMemberActionException("No puede modificar el estado de otro admin del grupo");
+            }
+        }
         user.setStatus(request.status());
         return MemberResponseDTO.from(userRepository.save(user));
     }
@@ -97,9 +123,41 @@ public class MemberAdminService {
     @Transactional
     public void delete(Long id) {
         roleGuard.assertRole(Rol.TENANT_ADMIN, Rol.SUPER_ADMIN);
-        User user = findInTenant(id);
+        User user = findById(id);
         assertNotSelf(id);
+        if (!currentIsSuperAdmin()) {
+            if (user.getRol() == Rol.SUPER_ADMIN || user.getRol() == Rol.TENANT_ADMIN) {
+                throw new InvalidMemberActionException("No puede eliminar a otro admin del grupo");
+            }
+        }
         userRepository.delete(user);
+    }
+
+    private void assertAdminLimit(Long tenantId, Rol rol) {
+        if (rol == Rol.TENANT_ADMIN) {
+            long admins = userRepository.countByTenantTenantIdAndRol(tenantId, Rol.TENANT_ADMIN);
+            if (admins >= MAX_ADMINS_PER_TENANT) {
+                throw new InvalidMemberActionException(
+                        "Cada grupo admite máximo " + MAX_ADMINS_PER_TENANT + " administradores"
+                );
+            }
+        }
+    }
+
+    private Tenant resolveTenant(Long tenantId) {
+        Long requested = currentIsSuperAdmin() ? tenantId : null;
+        Long target = requested != null ? requested : currentTenantId();
+        return tenantRepository.findById(target)
+                .orElseThrow(() -> new TenantNotFoundException(target));
+    }
+
+    private User findById(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new MemberNotFoundException(id));
+        if (!currentIsSuperAdmin() && !user.getTenant().getTenantId().equals(currentTenantId())) {
+            throw new CrossTenantAccessException();
+        }
+        return user;
     }
 
     private void assertNotSelf(Long id) {
@@ -108,28 +166,23 @@ public class MemberAdminService {
         }
     }
 
-    private User findInTenant(Long id) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new MemberNotFoundException(id));
-        if (!user.getTenant().getTenantId().equals(currentTenantId())) {
-            throw new CrossTenantAccessException();
-        }
-        return user;
+    private boolean currentIsSuperAdmin() {
+        return currentPrincipal().getRoleId() == Rol.SUPER_ADMIN;
     }
 
     private Long currentTenantId() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (!(authentication.getPrincipal() instanceof UserDetailsImpl principal)) {
-            throw new RoleRequiredException(Rol.TENANT_ADMIN, Rol.SUPER_ADMIN);
-        }
-        return principal.getTenantId();
+        return currentPrincipal().getTenantId();
     }
 
     private Long currentUserId() {
+        return currentPrincipal().getUserId();
+    }
+
+    private UserDetailsImpl currentPrincipal() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (!(authentication.getPrincipal() instanceof UserDetailsImpl principal)) {
             throw new RoleRequiredException(Rol.TENANT_ADMIN, Rol.SUPER_ADMIN);
         }
-        return principal.getUserId();
+        return principal;
     }
 }

@@ -98,7 +98,7 @@ class MemberAdminServiceTest {
         when(userRepository.findByTenantTenantId(1L))
                 .thenReturn(List.of(user(2L, 1L, "20210000002", Rol.MIEMBRO)));
 
-        List<MemberResponseDTO> result = memberAdminService.findAll();
+        List<MemberResponseDTO> result = memberAdminService.findAll(null);
 
         assertEquals(1, result.size());
         assertEquals("20210000002", result.get(0).codigo());
@@ -110,7 +110,7 @@ class MemberAdminServiceTest {
     void findAll_throwsRoleRequired_whenNotAdmin() {
         authenticate(2L, 1L, Rol.MIEMBRO);
 
-        assertThrows(RoleRequiredException.class, memberAdminService::findAll);
+        assertThrows(RoleRequiredException.class, () -> memberAdminService.findAll(null));
         verify(userRepository, never()).findByTenantTenantId(any());
     }
 
@@ -126,7 +126,7 @@ class MemberAdminServiceTest {
             return saved;
         });
 
-        CreateMemberRequestDTO request = new CreateMemberRequestDTO("20210000002", "clave123", "m2@glud.org", Rol.MIEMBRO);
+        CreateMemberRequestDTO request = new CreateMemberRequestDTO("20210000002", "clave123", "m2@glud.org", Rol.MIEMBRO, null);
 
         MemberResponseDTO result = memberAdminService.create(request);
 
@@ -145,7 +145,7 @@ class MemberAdminServiceTest {
         authenticate(10L, 1L, Rol.TENANT_ADMIN);
         when(userRepository.existsByCodigo("20210000002")).thenReturn(true);
 
-        CreateMemberRequestDTO request = new CreateMemberRequestDTO("20210000002", "clave123", null, Rol.MIEMBRO);
+        CreateMemberRequestDTO request = new CreateMemberRequestDTO("20210000002", "clave123", null, Rol.MIEMBRO, null);
 
         assertThrows(MemberAlreadyExistsException.class, () -> memberAdminService.create(request));
         verify(userRepository, never()).save(any());
@@ -155,7 +155,7 @@ class MemberAdminServiceTest {
     void create_throwsInvalidAction_whenAssigningSuperAdmin() {
         authenticate(10L, 1L, Rol.TENANT_ADMIN);
 
-        CreateMemberRequestDTO request = new CreateMemberRequestDTO("20210000002", "clave123", null, Rol.SUPER_ADMIN);
+        CreateMemberRequestDTO request = new CreateMemberRequestDTO("20210000002", "clave123", null, Rol.SUPER_ADMIN, null);
 
         assertThrows(InvalidMemberActionException.class, () -> memberAdminService.create(request));
     }
@@ -251,8 +251,162 @@ class MemberAdminServiceTest {
         when(userRepository.existsByCodigo("20210000002")).thenReturn(false);
         when(tenantRepository.findById(99L)).thenReturn(Optional.empty());
 
-        CreateMemberRequestDTO request = new CreateMemberRequestDTO("20210000002", "clave123", null, Rol.MIEMBRO);
+        CreateMemberRequestDTO request = new CreateMemberRequestDTO("20210000002", "clave123", null, Rol.MIEMBRO, null);
 
         assertThrows(TenantNotFoundException.class, () -> memberAdminService.create(request));
+    }
+
+    @Test
+    void findAll_superAdmin_filtersByTenantId() {
+        authenticate(10L, 1L, Rol.SUPER_ADMIN);
+        when(userRepository.findByTenantTenantId(5L))
+                .thenReturn(List.of(user(7L, 5L, "20210000007", Rol.MIEMBRO)));
+
+        List<MemberResponseDTO> result = memberAdminService.findAll(5L);
+
+        assertEquals(1, result.size());
+        assertEquals(5L, result.get(0).tenantId());
+        verify(userRepository).findByTenantTenantId(5L);
+    }
+
+    @Test
+    void findAll_superAdmin_listsAllTenants_whenNoFilter() {
+        authenticate(10L, 1L, Rol.SUPER_ADMIN);
+        when(userRepository.findAll())
+                .thenReturn(List.of(user(7L, 5L, "20210000007", Rol.MIEMBRO)));
+
+        List<MemberResponseDTO> result = memberAdminService.findAll(null);
+
+        assertEquals(1, result.size());
+        verify(userRepository).findAll();
+    }
+
+    @Test
+    void create_superAdmin_createsInAnotherTenant() {
+        authenticate(10L, 1L, Rol.SUPER_ADMIN);
+        when(userRepository.existsByCodigo("20210000009")).thenReturn(false);
+        when(tenantRepository.findById(5L)).thenReturn(Optional.of(tenant(5L)));
+        when(passwordEncoder.encode("clave123")).thenReturn("ENCODED");
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> {
+            User saved = invocation.getArgument(0);
+            saved.setUserId(9L);
+            return saved;
+        });
+
+        CreateMemberRequestDTO request = new CreateMemberRequestDTO("20210000009", "clave123", null, Rol.MIEMBRO, 5L);
+
+        MemberResponseDTO result = memberAdminService.create(request);
+
+        assertEquals(9L, result.id());
+        assertEquals(5L, result.tenantId());
+        verify(userRepository).save(argThat(u -> u.getTenant().getTenantId().equals(5L)));
+    }
+
+    @Test
+    void create_superAdmin_grantsSuperAdminRole() {
+        authenticate(10L, 1L, Rol.SUPER_ADMIN);
+        when(userRepository.existsByCodigo("20210000008")).thenReturn(false);
+        when(tenantRepository.findById(5L)).thenReturn(Optional.of(tenant(5L)));
+        when(passwordEncoder.encode("clave123")).thenReturn("ENCODED");
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        CreateMemberRequestDTO request = new CreateMemberRequestDTO("20210000008", "clave123", null, Rol.SUPER_ADMIN, 5L);
+
+        MemberResponseDTO result = memberAdminService.create(request);
+
+        assertEquals(Rol.SUPER_ADMIN, result.rol());
+    }
+
+    @Test
+    void create_throwsAdminLimit_whenTenantAlreadyHasTwoAdmins() {
+        authenticate(10L, 1L, Rol.SUPER_ADMIN);
+        when(userRepository.existsByCodigo("20210000003")).thenReturn(false);
+        when(tenantRepository.findById(1L)).thenReturn(Optional.of(tenant(1L)));
+        when(userRepository.countByTenantTenantIdAndRol(1L, Rol.TENANT_ADMIN)).thenReturn(2L);
+
+        CreateMemberRequestDTO request = new CreateMemberRequestDTO("20210000003", "clave123", null, Rol.TENANT_ADMIN, 1L);
+
+        InvalidMemberActionException ex = assertThrows(InvalidMemberActionException.class,
+                () -> memberAdminService.create(request));
+        assertTrue(ex.getMessage().contains("máximo 2"));
+    }
+
+    @Test
+    void update_tenantAdmin_cannotTouchSuperAdmin() {
+        authenticate(10L, 1L, Rol.TENANT_ADMIN);
+        when(userRepository.findById(2L)).thenReturn(Optional.of(user(2L, 1L, "20210000002", Rol.SUPER_ADMIN)));
+
+        UpdateMemberRequestDTO request = new UpdateMemberRequestDTO("x@glud.org", Rol.MIEMBRO);
+
+        assertThrows(CrossTenantAccessException.class, () -> memberAdminService.update(2L, request));
+    }
+
+    @Test
+    void update_superAdmin_grantsSuperAdminToMember() {
+        authenticate(10L, 1L, Rol.SUPER_ADMIN);
+        User target = user(2L, 1L, "20210000002", Rol.MIEMBRO);
+        when(userRepository.findById(2L)).thenReturn(Optional.of(target));
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        UpdateMemberRequestDTO request = new UpdateMemberRequestDTO(null, Rol.SUPER_ADMIN);
+
+        MemberResponseDTO result = memberAdminService.update(2L, request);
+
+        assertEquals(Rol.SUPER_ADMIN, result.rol());
+    }
+
+    @Test
+    void update_throwsSelfRoleChange() {
+        authenticate(2L, 1L, Rol.SUPER_ADMIN);
+        when(userRepository.findById(2L)).thenReturn(Optional.of(user(2L, 1L, "20210000002", Rol.SUPER_ADMIN)));
+
+        UpdateMemberRequestDTO request = new UpdateMemberRequestDTO(null, Rol.MIEMBRO);
+
+        assertThrows(InvalidMemberActionException.class, () -> memberAdminService.update(2L, request));
+    }
+
+    @Test
+    void update_promotionThrowsAdminLimit_whenTwoAdminsExist() {
+        authenticate(10L, 1L, Rol.TENANT_ADMIN);
+        when(userRepository.findById(2L)).thenReturn(Optional.of(user(2L, 1L, "20210000002", Rol.MIEMBRO)));
+        when(userRepository.countByTenantTenantIdAndRol(1L, Rol.TENANT_ADMIN)).thenReturn(2L);
+
+        UpdateMemberRequestDTO request = new UpdateMemberRequestDTO(null, Rol.TENANT_ADMIN);
+
+        assertThrows(InvalidMemberActionException.class, () -> memberAdminService.update(2L, request));
+    }
+
+    @Test
+    void delete_tenantAdmin_cannotDeleteAnotherAdmin() {
+        authenticate(10L, 1L, Rol.TENANT_ADMIN);
+        when(userRepository.findById(2L)).thenReturn(Optional.of(user(2L, 1L, "20210000002", Rol.TENANT_ADMIN)));
+
+        assertThrows(InvalidMemberActionException.class, () -> memberAdminService.delete(2L));
+        verify(userRepository, never()).delete(any());
+    }
+
+    @Test
+    void updateStatus_tenantAdmin_cannotSuspendAnotherAdmin() {
+        authenticate(10L, 1L, Rol.TENANT_ADMIN);
+        when(userRepository.findById(2L)).thenReturn(Optional.of(user(2L, 1L, "20210000002", Rol.TENANT_ADMIN)));
+
+        UpdateMemberStatusRequestDTO request = new UpdateMemberStatusRequestDTO(UserStatus.SUSPENDED);
+
+        assertThrows(InvalidMemberActionException.class, () -> memberAdminService.updateStatus(2L, request));
+    }
+
+    @Test
+    void updateStatus_superAdmin_canSuspendAnyMember() {
+        authenticate(10L, 1L, Rol.SUPER_ADMIN);
+        User admin = user(2L, 5L, "20210000002", Rol.TENANT_ADMIN);
+        when(userRepository.findById(2L)).thenReturn(Optional.of(admin));
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        UpdateMemberStatusRequestDTO request = new UpdateMemberStatusRequestDTO(UserStatus.SUSPENDED);
+
+        MemberResponseDTO result = memberAdminService.updateStatus(2L, request);
+
+        assertEquals(UserStatus.SUSPENDED, result.status());
+        assertEquals(5L, result.tenantId());
     }
 }
