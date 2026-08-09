@@ -22,9 +22,10 @@ public record MemberCurrentResponseDTO(
     }
 
     public static MemberCurrentResponseDTO from(User user, String totpSecret) {
+        String name = user.getName();
         return new MemberCurrentResponseDTO(
                 user.getCodigo(),
-                user.getCodigo(),
+                name != null ? name : user.getCodigo(),
                 user.getEmail(),
                 user.getRol().name(),
                 List.of(user.getTenant().getName()),

@@ -126,13 +126,13 @@ class MemberAdminServiceTest {
             return saved;
         });
 
-        CreateMemberRequestDTO request = new CreateMemberRequestDTO("20210000002", "clave123", "m2@glud.org", Rol.MIEMBRO, null);
+        CreateMemberRequestDTO request = new CreateMemberRequestDTO("20210000002", "clave123", "María Gómez", Rol.MIEMBRO, null);
 
         MemberResponseDTO result = memberAdminService.create(request);
 
         assertEquals(2L, result.id());
         assertEquals("20210000002", result.codigo());
-        assertEquals("m2@glud.org", result.email());
+        assertEquals("María Gómez", result.name());
         assertEquals(Rol.MIEMBRO, result.rol());
         assertEquals(UserStatus.ACTIVE, result.status());
         assertEquals(1L, result.tenantId());
@@ -145,7 +145,7 @@ class MemberAdminServiceTest {
         authenticate(10L, 1L, Rol.TENANT_ADMIN);
         when(userRepository.existsByCodigo("20210000002")).thenReturn(true);
 
-        CreateMemberRequestDTO request = new CreateMemberRequestDTO("20210000002", "clave123", null, Rol.MIEMBRO, null);
+        CreateMemberRequestDTO request = new CreateMemberRequestDTO("20210000002", "clave123", "Juan Pérez", Rol.MIEMBRO, null);
 
         assertThrows(MemberAlreadyExistsException.class, () -> memberAdminService.create(request));
         verify(userRepository, never()).save(any());
@@ -155,7 +155,7 @@ class MemberAdminServiceTest {
     void create_throwsInvalidAction_whenAssigningSuperAdmin() {
         authenticate(10L, 1L, Rol.TENANT_ADMIN);
 
-        CreateMemberRequestDTO request = new CreateMemberRequestDTO("20210000002", "clave123", null, Rol.SUPER_ADMIN, null);
+        CreateMemberRequestDTO request = new CreateMemberRequestDTO("20210000002", "clave123", "Juan Pérez", Rol.SUPER_ADMIN, null);
 
         assertThrows(InvalidMemberActionException.class, () -> memberAdminService.create(request));
     }
@@ -166,11 +166,11 @@ class MemberAdminServiceTest {
         when(userRepository.findById(2L)).thenReturn(Optional.of(user(2L, 1L, "20210000002", Rol.MIEMBRO)));
         when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        UpdateMemberRequestDTO request = new UpdateMemberRequestDTO("nuevo@glud.org", Rol.INVITADO);
+        UpdateMemberRequestDTO request = new UpdateMemberRequestDTO("Nombre Nuevo", Rol.INVITADO);
 
         MemberResponseDTO result = memberAdminService.update(2L, request);
 
-        assertEquals("nuevo@glud.org", result.email());
+        assertEquals("Nombre Nuevo", result.name());
         assertEquals(Rol.INVITADO, result.rol());
     }
 
@@ -179,7 +179,7 @@ class MemberAdminServiceTest {
         authenticate(10L, 1L, Rol.TENANT_ADMIN);
         when(userRepository.findById(2L)).thenReturn(Optional.of(user(2L, 2L, "20210000002", Rol.MIEMBRO)));
 
-        UpdateMemberRequestDTO request = new UpdateMemberRequestDTO("x@glud.org", null);
+        UpdateMemberRequestDTO request = new UpdateMemberRequestDTO("Nombre X", null);
 
         assertThrows(CrossTenantAccessException.class, () -> memberAdminService.update(2L, request));
     }
@@ -189,7 +189,7 @@ class MemberAdminServiceTest {
         authenticate(10L, 1L, Rol.TENANT_ADMIN);
         when(userRepository.findById(99L)).thenReturn(Optional.empty());
 
-        UpdateMemberRequestDTO request = new UpdateMemberRequestDTO("x@glud.org", null);
+        UpdateMemberRequestDTO request = new UpdateMemberRequestDTO("Nombre X", null);
 
         assertThrows(MemberNotFoundException.class, () -> memberAdminService.update(99L, request));
     }
@@ -251,7 +251,7 @@ class MemberAdminServiceTest {
         when(userRepository.existsByCodigo("20210000002")).thenReturn(false);
         when(tenantRepository.findById(99L)).thenReturn(Optional.empty());
 
-        CreateMemberRequestDTO request = new CreateMemberRequestDTO("20210000002", "clave123", null, Rol.MIEMBRO, null);
+        CreateMemberRequestDTO request = new CreateMemberRequestDTO("20210000002", "clave123", "Juan Pérez", Rol.MIEMBRO, null);
 
         assertThrows(TenantNotFoundException.class, () -> memberAdminService.create(request));
     }
@@ -293,7 +293,7 @@ class MemberAdminServiceTest {
             return saved;
         });
 
-        CreateMemberRequestDTO request = new CreateMemberRequestDTO("20210000009", "clave123", null, Rol.MIEMBRO, 5L);
+        CreateMemberRequestDTO request = new CreateMemberRequestDTO("20210000009", "clave123", "Rol M", Rol.MIEMBRO, 5L);
 
         MemberResponseDTO result = memberAdminService.create(request);
 
@@ -310,7 +310,7 @@ class MemberAdminServiceTest {
         when(passwordEncoder.encode("clave123")).thenReturn("ENCODED");
         when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        CreateMemberRequestDTO request = new CreateMemberRequestDTO("20210000008", "clave123", null, Rol.SUPER_ADMIN, 5L);
+        CreateMemberRequestDTO request = new CreateMemberRequestDTO("20210000008", "clave123", "S A", Rol.SUPER_ADMIN, 5L);
 
         MemberResponseDTO result = memberAdminService.create(request);
 
@@ -324,7 +324,7 @@ class MemberAdminServiceTest {
         when(tenantRepository.findById(1L)).thenReturn(Optional.of(tenant(1L)));
         when(userRepository.countByTenantTenantIdAndRol(1L, Rol.TENANT_ADMIN)).thenReturn(2L);
 
-        CreateMemberRequestDTO request = new CreateMemberRequestDTO("20210000003", "clave123", null, Rol.TENANT_ADMIN, 1L);
+        CreateMemberRequestDTO request = new CreateMemberRequestDTO("20210000003", "clave123", "T A", Rol.TENANT_ADMIN, 1L);
 
         InvalidMemberActionException ex = assertThrows(InvalidMemberActionException.class,
                 () -> memberAdminService.create(request));
@@ -336,7 +336,7 @@ class MemberAdminServiceTest {
         authenticate(10L, 1L, Rol.TENANT_ADMIN);
         when(userRepository.findById(2L)).thenReturn(Optional.of(user(2L, 1L, "20210000002", Rol.SUPER_ADMIN)));
 
-        UpdateMemberRequestDTO request = new UpdateMemberRequestDTO("x@glud.org", Rol.MIEMBRO);
+        UpdateMemberRequestDTO request = new UpdateMemberRequestDTO("Nombre X", Rol.MIEMBRO);
 
         assertThrows(CrossTenantAccessException.class, () -> memberAdminService.update(2L, request));
     }

@@ -8,18 +8,19 @@ public record MemberResponseDTO(
         Long id,
         String codigo,
         String username,
-        String email,
+        String name,
         Rol rol,
         UserStatus status,
         Long tenantId,
         String tenantName
 ) {
     public static MemberResponseDTO from(User user) {
+        String name = user.getName();
         return new MemberResponseDTO(
                 user.getUserId(),
                 user.getCodigo(),
                 user.getUsername(),
-                user.getEmail(),
+                name != null ? name : user.getUsername(),
                 user.getRol(),
                 user.getStatus(),
                 user.getTenant().getTenantId(),

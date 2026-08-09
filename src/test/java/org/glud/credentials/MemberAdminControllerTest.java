@@ -45,13 +45,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class MemberAdminControllerTest {
 
     private static final MemberResponseDTO MEMBER_DTO = new MemberResponseDTO(
-            2L, "20210000002", "20210000002", "m2@glud.org", Rol.MIEMBRO, UserStatus.ACTIVE, 1L, "GLUD");
+            2L, "20210000002", "20210000002", "María Gómez", Rol.MIEMBRO, UserStatus.ACTIVE, 1L, "GLUD");
 
     private static final String VALID_CREATE_BODY = """
             {
               "codigo": "20210000002",
               "password": "clave123",
-              "email": "m2@glud.org",
+              "name": "María Gómez",
               "rol": "MIEMBRO"
             }
             """;
@@ -139,7 +139,7 @@ class MemberAdminControllerTest {
 
         String body = """
                 {
-                  "email": "nuevo@glud.org",
+                  "name": "Nombre Nuevo",
                   "rol": "INVITADO"
                 }
                 """;
@@ -159,7 +159,7 @@ class MemberAdminControllerTest {
 
         String body = """
                 {
-                  "email": "nuevo@glud.org"
+                  "name": "Nombre Nuevo"
                 }
                 """;
 
@@ -177,7 +177,7 @@ class MemberAdminControllerTest {
 
         String body = """
                 {
-                  "email": "nuevo@glud.org"
+                  "name": "Nombre Nuevo"
                 }
                 """;
 
@@ -191,7 +191,7 @@ class MemberAdminControllerTest {
     @WithMockUser
     void updateStatus_returns200WithSuspendedMember() throws Exception {
         MemberResponseDTO suspended = new MemberResponseDTO(
-                2L, "20210000002", "20210000002", "m2@glud.org", Rol.MIEMBRO, UserStatus.SUSPENDED, 1L, "GLUD");
+                2L, "20210000002", "20210000002", "María Gómez", Rol.MIEMBRO, UserStatus.SUSPENDED, 1L, "GLUD");
         when(memberAdminService.updateStatus(eq(2L), any(UpdateMemberStatusRequestDTO.class))).thenReturn(suspended);
 
         String body = """

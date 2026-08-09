@@ -1,4 +1,4 @@
-package org.glud.credentials.attendance.model;
+package org.glud.credentials.event.model;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -15,38 +15,41 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.glud.credentials.auth.model.Tenant;
 import org.glud.credentials.auth.model.User;
-import org.glud.credentials.event.model.Event;
 
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "attendance")
+@Table(name = "events")
 @Getter
 @Setter
 @NoArgsConstructor
-public class Attendance {
+public class Event {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long attendanceId;
+    private Long eventId;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "tenant_id", nullable = false)
     private Tenant tenant;
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "marked_by", nullable = false)
-    private User markedBy;
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "event_id")
-    private Event event;
+
     @Column(nullable = false)
-    private LocalDateTime checkInAt;
+    private String title;
+
+    @Column(nullable = false)
+    private LocalDateTime startsAt;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "created_by", nullable = false)
+    private User createdBy;
+
+    @Column(nullable = false)
+    private LocalDateTime createdAt;
 
     @PrePersist
     void prePersist() {
-        if (checkInAt == null) {
-            checkInAt = LocalDateTime.now();
+        if (createdAt == null) {
+            createdAt = LocalDateTime.now();
         }
     }
 }

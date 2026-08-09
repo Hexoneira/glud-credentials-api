@@ -30,6 +30,11 @@ public class GlobalExceptionHandler {
         return error(ex.getMessage(), HttpStatus.NOT_FOUND);
     }
 
+    @ExceptionHandler(EventNotFoundException.class)
+    public ResponseEntity<ApiError> handleEventNotFound(EventNotFoundException ex) {
+        return error(ex.getMessage(), HttpStatus.NOT_FOUND);
+    }
+
     @ExceptionHandler(GuestLinkExpiredException.class)
     public ResponseEntity<ApiError> handleGuestLinkExpired(GuestLinkExpiredException ex) {
         return error(ex.getMessage(), HttpStatus.GONE);
@@ -72,6 +77,11 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(InvalidScannedCodeException.class)
     public ResponseEntity<ApiError> handleInvalidScannedCode(InvalidScannedCodeException ex) {
+        return error(ex.getMessage(), HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(InvalidTOTPException.class)
+    public ResponseEntity<ApiError> handleInvalidTotp(InvalidTOTPException ex) {
         return error(ex.getMessage(), HttpStatus.BAD_REQUEST);
     }
 
