@@ -32,6 +32,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 
@@ -270,7 +271,7 @@ class EventServiceTest {
     @Test
     void statusOf_returnsScheduled_whenEventInFuture() {
         Event future = event(1L, 1L);
-        future.setStartsAt(LocalDateTime.now().plusDays(1));
+        future.setStartsAt(LocalDateTime.now(ZoneId.of("America/Bogota")).plusDays(1));
 
         assertEquals(EventStatus.SCHEDULED, EventService.statusOf(future));
     }
@@ -278,7 +279,7 @@ class EventServiceTest {
     @Test
     void statusOf_returnsInProgress_withinWindow() {
         Event recent = event(1L, 1L);
-        recent.setStartsAt(LocalDateTime.now().minusMinutes(30));
+        recent.setStartsAt(LocalDateTime.now(ZoneId.of("America/Bogota")).minusMinutes(30));
 
         assertEquals(EventStatus.IN_PROGRESS, EventService.statusOf(recent));
     }
@@ -286,7 +287,7 @@ class EventServiceTest {
     @Test
     void statusOf_returnsFinished_afterWindow() {
         Event old = event(1L, 1L);
-        old.setStartsAt(LocalDateTime.now().minusHours(3));
+        old.setStartsAt(LocalDateTime.now(ZoneId.of("America/Bogota")).minusHours(3));
 
         assertEquals(EventStatus.FINISHED, EventService.statusOf(old));
     }
