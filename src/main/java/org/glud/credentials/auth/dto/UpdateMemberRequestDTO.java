@@ -1,11 +1,11 @@
 package org.glud.credentials.auth.dto;
 
-import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.Size;
 import org.glud.credentials.auth.model.Rol;
 
 public record UpdateMemberRequestDTO(
-        @Email
-        String email,
+        @Size(max = 120)
+        String name,
         Rol rol
 ) {
 }

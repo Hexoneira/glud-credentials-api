@@ -36,7 +36,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class AttendanceControllerTest {
 
     private static final AttendanceResponseDTO ATTENDANCE_DTO = new AttendanceResponseDTO(
-            1L, "20210000002", "m2@glud.org", Rol.MIEMBRO, 1L, "GLUD",
+            1L, "20210000002", "María Gómez", "m2@glud.org", Rol.MIEMBRO, 1L, "GLUD",
             LocalDateTime.of(2026, 8, 5, 9, 30), "20219999999");
 
     @Autowired
@@ -113,5 +113,34 @@ class AttendanceControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1))
                 .andExpect(jsonPath("$[0].codigo").value("20210000002"));
+    }
+
+    @Test
+    void todayExport_returnsCsvAttachment() throws Exception {
+        when(attendanceService.exportTodayCsv()).thenReturn("""
+                \uFEFFCódigo;Nombre;Rol;Grupo;Hora;Registrado por
+                "20210000002";"María Gómez";"MIEMBRO";"GLUD";"09:30:00";"20219999999"
+                """);
+
+        mockMvc.perform(get("/api/attendance/today/export"))
+                .andExpect(status().isOk())
+                .andExpect(result -> result.getResponse().getContentType().startsWith("text/csv"))
+                .andExpect(result -> result.getResponse().getHeader("Content-Disposition")
+                        .contains("attachment; filename=\"asistencia-"))
+                .andExpect(result -> result.getResponse().getContentAsString()
+                        .contains("María Gómez"));
+    }
+
+    @Test
+    void register_acceptsEventIdAndTotpPayload() throws Exception {
+        when(attendanceService.registerAttendance(any())).thenReturn(ATTENDANCE_DTO);
+
+        mockMvc.perform(post("/api/attendance/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                { "code": "ID:20210000002|TOTP:123456", "eventId": 50 }
+                                """))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.codigo").value("20210000002"));
     }
 }

@@ -74,7 +74,7 @@ public class MemberAdminService {
         user.setCodigo(request.codigo());
         user.setUsername(request.codigo());
         user.setPassword(passwordEncoder.encode(request.password()));
-        user.setEmail(request.email());
+        user.setName(request.name().trim());
         user.setRol(request.rol());
         user.setStatus(UserStatus.ACTIVE);
         user.setTenant(tenant);
@@ -100,8 +100,8 @@ public class MemberAdminService {
             assertAdminLimit(user.getTenant().getTenantId(), request.rol());
             user.setRol(request.rol());
         }
-        if (request.email() != null) {
-            user.setEmail(request.email());
+        if (request.name() != null && !request.name().isBlank()) {
+            user.setName(request.name().trim());
         }
         return MemberResponseDTO.from(userRepository.save(user));
     }

@@ -14,4 +14,10 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
             Long tenantId, LocalDateTime start, LocalDateTime end);
 
     List<Attendance> findAllByCheckInAtBetweenOrderByCheckInAtDesc(LocalDateTime start, LocalDateTime end);
+
+    boolean existsByEventEventIdAndUserUserId(Long eventId, Long userId);
+
+    List<Attendance> findByEventEventIdOrderByCheckInAtDesc(Long eventId);
+
+    long countByEventEventId(Long eventId);
 }

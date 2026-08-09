@@ -1,31 +1,24 @@
-package org.glud.credentials.attendance.dto;
+package org.glud.credentials.event.dto;
 
 import org.glud.credentials.attendance.model.Attendance;
-import org.glud.credentials.auth.model.Rol;
 
 import java.time.LocalDateTime;
 
-public record AttendanceResponseDTO(
+public record EventAttendanceResponseDTO(
         Long attendanceId,
+        Long userId,
         String codigo,
         String name,
-        String email,
-        Rol rol,
-        Long tenantId,
-        String tenantName,
         LocalDateTime checkInAt,
         String markedByCodigo
 ) {
-    public static AttendanceResponseDTO from(Attendance attendance) {
+    public static EventAttendanceResponseDTO from(Attendance attendance) {
         String name = attendance.getUser().getName();
-        return new AttendanceResponseDTO(
+        return new EventAttendanceResponseDTO(
                 attendance.getAttendanceId(),
+                attendance.getUser().getUserId(),
                 attendance.getUser().getCodigo(),
                 name != null ? name : attendance.getUser().getCodigo(),
-                attendance.getUser().getEmail(),
-                attendance.getUser().getRol(),
-                attendance.getTenant().getTenantId(),
-                attendance.getTenant().getName(),
                 attendance.getCheckInAt(),
                 attendance.getMarkedBy().getCodigo()
         );

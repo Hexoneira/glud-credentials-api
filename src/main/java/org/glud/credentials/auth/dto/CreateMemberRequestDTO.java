@@ -1,6 +1,5 @@
 package org.glud.credentials.auth.dto;
 
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -14,8 +13,9 @@ public record CreateMemberRequestDTO(
         @NotBlank
         @Size(min = 6)
         String password,
-        @Email
-        String email,
+        @NotBlank
+        @Size(max = 120)
+        String name,
         @NotNull
         Rol rol,
         Long tenantId

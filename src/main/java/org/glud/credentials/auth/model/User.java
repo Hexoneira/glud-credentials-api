@@ -21,6 +21,7 @@ public class User {
     @Column(nullable = false)
     private String codigo;
     private String email;
+    private String name;
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "tenant_id", nullable = false)
     private Tenant tenant;

@@ -16,7 +16,8 @@ import java.util.regex.Pattern;
 public final class AttendanceCodeParser {
 
     private static final Pattern CODIGO = Pattern.compile("[A-Za-z0-9_-]{3,30}");
-    private static final Pattern ID_PREFIX = Pattern.compile("^ID:([A-Za-z0-9_-]{3,30})\\|TOTP:");
+    private static final Pattern QR_PAYLOAD = Pattern.compile(
+            "^ID:([A-Za-z0-9_-]{3,30})\\|TOTP:(\\d{6})$");
 
     private AttendanceCodeParser() {
     }
@@ -26,10 +27,20 @@ public final class AttendanceCodeParser {
         if (CODIGO.matcher(value).matches()) {
             return value;
         }
-        Matcher matcher = ID_PREFIX.matcher(value);
-        if (matcher.find()) {
+        Matcher matcher = QR_PAYLOAD.matcher(value);
+        if (matcher.matches()) {
             return matcher.group(1);
         }
         throw new InvalidScannedCodeException();
+    }
+
+    /**
+     * Extrae el código TOTP de 6 dígitos del payload QR del carnet.
+     * Devuelve {@code null} cuando el contenido escaneado es un código plano.
+     */
+    public static String extractTotp(String scanned) {
+        String value = scanned == null ? "" : scanned.trim();
+        Matcher matcher = QR_PAYLOAD.matcher(value);
+        return matcher.matches() ? matcher.group(2) : null;
     }
 }
