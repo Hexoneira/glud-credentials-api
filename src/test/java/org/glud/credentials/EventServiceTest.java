@@ -60,7 +60,6 @@ class EventServiceTest {
     @BeforeEach
     void setUp() {
         eventService = new EventService(eventRepository, tenantRepository, userRepository, attendanceRepository, roleGuard);
-        org.springframework.test.util.ReflectionTestUtils.setField(eventService, "self", eventService);
     }
 
     @AfterEach
@@ -193,8 +192,8 @@ class EventServiceTest {
     void create_throwsWhenSuperAdminOmitsTenant() {
         authenticate(1L, 5L, Rol.SUPER_ADMIN);
 
-        assertThrows(InvalidMemberActionException.class, () -> eventService.create(
-                new CreateEventRequestDTO("Asamblea", LocalDateTime.of(2026, 8, 10, 18, 0), null)));
+        CreateEventRequestDTO request = new CreateEventRequestDTO("Asamblea", LocalDateTime.of(2026, 8, 10, 18, 0), null);
+        assertThrows(InvalidMemberActionException.class, () -> eventService.create(request));
     }
 
     @Test

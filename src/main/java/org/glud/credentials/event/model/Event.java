@@ -17,6 +17,7 @@ import org.glud.credentials.auth.model.Tenant;
 import org.glud.credentials.auth.model.User;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 @Entity
 @Table(name = "events")
@@ -49,7 +50,7 @@ public class Event {
     @PrePersist
     void prePersist() {
         if (createdAt == null) {
-            createdAt = LocalDateTime.now();
+            createdAt = LocalDateTime.now(ZoneId.of("America/Bogota"));
         }
     }
 }

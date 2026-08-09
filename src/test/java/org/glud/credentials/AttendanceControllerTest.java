@@ -117,9 +117,10 @@ class AttendanceControllerTest {
 
     @Test
     void todayExport_returnsCsvAttachment() throws Exception {
-        when(attendanceService.exportTodayCsv()).thenReturn(
-                "\uFEFFCódigo;Nombre;Rol;Grupo;Hora;Registrado por\r\n" +
-                "\"20210000002\";\"María Gómez\";\"MIEMBRO\";\"GLUD\";\"09:30:00\";\"20219999999\"\r\n");
+        when(attendanceService.exportTodayCsv()).thenReturn("""
+                \uFEFFCódigo;Nombre;Rol;Grupo;Hora;Registrado por
+                "20210000002";"María Gómez";"MIEMBRO";"GLUD";"09:30:00";"20219999999"
+                """);
 
         mockMvc.perform(get("/api/attendance/today/export"))
                 .andExpect(status().isOk())

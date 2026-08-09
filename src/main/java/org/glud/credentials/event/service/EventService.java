@@ -22,14 +22,13 @@ import org.glud.credentials.security.exception.InvalidMemberActionException;
 import org.glud.credentials.security.exception.MemberNotFoundException;
 import org.glud.credentials.security.exception.RoleRequiredException;
 import org.glud.credentials.security.exception.TenantNotFoundException;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 
 @Service
@@ -39,9 +38,7 @@ public class EventService {
     /** Ventana (en horas) en la que un evento se considera "en curso" desde su hora de inicio. */
     public static final long IN_PROGRESS_WINDOW_HOURS = 2;
 
-    @Autowired
-    @Lazy
-    private EventService self;
+    private static final ZoneId COLOMBIA = ZoneId.of("America/Bogota");
 
     private final EventRepository eventRepository;
     private final TenantRepository tenantRepository;
@@ -97,15 +94,20 @@ public class EventService {
     public List<EventAttendanceResponseDTO> attendees(Long eventId) {
         roleGuard.assertRole(Rol.TENANT_ADMIN, Rol.SUPER_ADMIN);
         requireOwnedEvent(eventId);
-        return attendanceRepository.findByEventEventIdOrderByCheckInAtDesc(eventId).stream()
-                .map(EventAttendanceResponseDTO::from)
-                .toList();
+        return findAttendees(eventId);
     }
 
     @Transactional(readOnly = true)
     public String exportAttendeesCsv(Long eventId) {
         Event event = requireOwnedEvent(eventId);
-        return AttendanceCsvExporter.attendeesCsv(event.getTitle(), self.attendees(eventId));
+        roleGuard.assertRole(Rol.TENANT_ADMIN, Rol.SUPER_ADMIN);
+        return AttendanceCsvExporter.attendeesCsv(event.getTitle(), findAttendees(eventId));
+    }
+
+    private List<EventAttendanceResponseDTO> findAttendees(Long eventId) {
+        return attendanceRepository.findByEventEventIdOrderByCheckInAtDesc(eventId).stream()
+                .map(EventAttendanceResponseDTO::from)
+                .toList();
     }
 
     @Transactional
@@ -141,7 +143,7 @@ public class EventService {
     }
 
     public static EventStatus statusOf(Event event) {
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now(COLOMBIA);
         LocalDateTime start = event.getStartsAt();
         if (now.isBefore(start)) {
             return EventStatus.SCHEDULED;

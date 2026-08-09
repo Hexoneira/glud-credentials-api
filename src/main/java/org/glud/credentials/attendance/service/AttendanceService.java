@@ -22,8 +22,6 @@ import org.glud.credentials.security.exception.InvalidTOTPException;
 import org.glud.credentials.security.exception.MemberNotFoundException;
 import org.glud.credentials.security.exception.RoleRequiredException;
 import org.glud.credentials.totp_seed.service.TOTPService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -31,15 +29,14 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class AttendanceService {
 
-    @Autowired
-    @Lazy
-    private AttendanceService self;
+    private static final ZoneId COLOMBIA = ZoneId.of("America/Bogota");
 
     private final AttendanceRepository attendanceRepository;
     private final UserRepository userRepository;
@@ -88,7 +85,7 @@ public class AttendanceService {
             attendance.setUser(member);
             attendance.setMarkedBy(marker);
             attendance.setEvent(event);
-            attendance.setCheckInAt(LocalDateTime.now());
+            attendance.setCheckInAt(LocalDateTime.now(COLOMBIA));
 
             return AttendanceResponseDTO.from(attendanceRepository.save(attendance));
         }
@@ -115,21 +112,23 @@ public class AttendanceService {
     @Transactional(readOnly = true)
     public List<AttendanceResponseDTO> todayAttendance() {
         roleGuard.assertRole(Rol.TENANT_ADMIN, Rol.SUPER_ADMIN);
-
-        LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
-        LocalDateTime endOfDay = startOfDay.plusDays(1);
-
-        List<Attendance> records = currentIsSuperAdmin()
-                ? attendanceRepository.findAllByCheckInAtBetweenOrderByCheckInAtDesc(startOfDay, endOfDay)
-                : attendanceRepository.findByTenantTenantIdAndCheckInAtBetweenOrderByCheckInAtDesc(
-                        currentTenantId(), startOfDay, endOfDay);
-
-        return records.stream().map(AttendanceResponseDTO::from).toList();
+        return findTodayRecords().stream().map(AttendanceResponseDTO::from).toList();
     }
 
     @Transactional(readOnly = true)
     public String exportTodayCsv() {
-        return AttendanceCsvExporter.todayCsv(self.todayAttendance());
+        roleGuard.assertRole(Rol.TENANT_ADMIN, Rol.SUPER_ADMIN);
+        return AttendanceCsvExporter.todayCsv(findTodayRecords().stream().map(AttendanceResponseDTO::from).toList());
+    }
+
+    private List<Attendance> findTodayRecords() {
+        LocalDateTime startOfDay = LocalDate.now(COLOMBIA).atStartOfDay();
+        LocalDateTime endOfDay = startOfDay.plusDays(1);
+
+        return currentIsSuperAdmin()
+                ? attendanceRepository.findAllByCheckInAtBetweenOrderByCheckInAtDesc(startOfDay, endOfDay)
+                : attendanceRepository.findByTenantTenantIdAndCheckInAtBetweenOrderByCheckInAtDesc(
+                        currentTenantId(), startOfDay, endOfDay);
     }
 
     private void assertValidTotp(User member, String totp) {
@@ -140,7 +139,7 @@ public class AttendanceService {
             }
         } catch (InvalidTOTPException ex) {
             throw ex;
-        } catch (Exception ex) {
+        } catch (Exception _) {
             throw new InvalidTOTPException();
         }
     }

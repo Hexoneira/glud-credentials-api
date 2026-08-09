@@ -158,8 +158,8 @@ class AttendanceServiceTest {
     void register_throwsInvalidCode() {
         authenticate(9L, 1L, Rol.TENANT_ADMIN);
 
-        assertThrows(InvalidScannedCodeException.class, () ->
-                attendanceService.registerAttendance(new RegisterAttendanceRequestDTO("no válido", null)));
+        RegisterAttendanceRequestDTO request = new RegisterAttendanceRequestDTO("no válido", null);
+        assertThrows(InvalidScannedCodeException.class, () -> attendanceService.registerAttendance(request));
         verify(userRepository, never()).findByCodigo(any());
     }
 
@@ -187,8 +187,8 @@ class AttendanceServiceTest {
         when(totpService.generateSeed("20210000002", null)).thenReturn("SEED");
         when(totpService.verify("SEED", "999999")).thenReturn(false);
 
-        assertThrows(InvalidTOTPException.class, () ->
-                attendanceService.registerAttendance(new RegisterAttendanceRequestDTO("ID:20210000002|TOTP:999999", null)));
+        RegisterAttendanceRequestDTO request = new RegisterAttendanceRequestDTO("ID:20210000002|TOTP:999999", null);
+        assertThrows(InvalidTOTPException.class, () -> attendanceService.registerAttendance(request));
         verify(attendanceRepository, never()).save(any());
     }
 
@@ -210,8 +210,8 @@ class AttendanceServiceTest {
         authenticate(9L, 1L, Rol.TENANT_ADMIN);
         when(userRepository.findByCodigo("20210000999")).thenReturn(Optional.empty());
 
-        assertThrows(MemberNotFoundException.class, () ->
-                attendanceService.registerAttendance(new RegisterAttendanceRequestDTO("20210000999", null)));
+        RegisterAttendanceRequestDTO request = new RegisterAttendanceRequestDTO("20210000999", null);
+        assertThrows(MemberNotFoundException.class, () -> attendanceService.registerAttendance(request));
     }
 
     @Test
@@ -219,8 +219,8 @@ class AttendanceServiceTest {
         authenticate(9L, 1L, Rol.TENANT_ADMIN);
         when(userRepository.findByCodigo("20210000002")).thenReturn(Optional.of(user(2L, 2L, "20210000002", Rol.MIEMBRO, UserStatus.ACTIVE)));
 
-        assertThrows(CrossTenantAccessException.class, () ->
-                attendanceService.registerAttendance(new RegisterAttendanceRequestDTO("20210000002", null)));
+        RegisterAttendanceRequestDTO request = new RegisterAttendanceRequestDTO("20210000002", null);
+        assertThrows(CrossTenantAccessException.class, () -> attendanceService.registerAttendance(request));
     }
 
     @Test
@@ -228,8 +228,8 @@ class AttendanceServiceTest {
         authenticate(9L, 1L, Rol.TENANT_ADMIN);
         when(userRepository.findByCodigo("20210000002")).thenReturn(Optional.of(user(2L, 1L, "20210000002", Rol.MIEMBRO, UserStatus.SUSPENDED)));
 
-        assertThrows(InvalidMemberActionException.class, () ->
-                attendanceService.registerAttendance(new RegisterAttendanceRequestDTO("20210000002", null)));
+        RegisterAttendanceRequestDTO request = new RegisterAttendanceRequestDTO("20210000002", null);
+        assertThrows(InvalidMemberActionException.class, () -> attendanceService.registerAttendance(request));
     }
 
     @Test
@@ -238,8 +238,8 @@ class AttendanceServiceTest {
         when(userRepository.findByCodigo("20210000002")).thenReturn(Optional.of(user(2L, 1L, "20210000002", Rol.MIEMBRO, UserStatus.ACTIVE)));
         when(attendanceRepository.existsByUserUserIdAndCheckInAtBetween(any(), any(), any())).thenReturn(true);
 
-        assertThrows(AttendanceAlreadyExistsException.class, () ->
-                attendanceService.registerAttendance(new RegisterAttendanceRequestDTO("20210000002", null)));
+        RegisterAttendanceRequestDTO request = new RegisterAttendanceRequestDTO("20210000002", null);
+        assertThrows(AttendanceAlreadyExistsException.class, () -> attendanceService.registerAttendance(request));
         verify(attendanceRepository, never()).save(any());
     }
 
@@ -247,8 +247,8 @@ class AttendanceServiceTest {
     void register_throwsRoleRequired_whenMember() {
         authenticate(2L, 1L, Rol.MIEMBRO);
 
-        assertThrows(RoleRequiredException.class, () ->
-                attendanceService.registerAttendance(new RegisterAttendanceRequestDTO("20210000003", null)));
+        RegisterAttendanceRequestDTO request = new RegisterAttendanceRequestDTO("20210000003", null);
+        assertThrows(RoleRequiredException.class, () -> attendanceService.registerAttendance(request));
     }
 
     @Test
@@ -275,8 +275,8 @@ class AttendanceServiceTest {
         when(eventRepository.findById(50L)).thenReturn(Optional.of(event(50L, 1L)));
         when(attendanceRepository.existsByEventEventIdAndUserUserId(50L, 2L)).thenReturn(true);
 
-        assertThrows(AttendanceAlreadyExistsException.class, () ->
-                attendanceService.registerAttendance(new RegisterAttendanceRequestDTO("20210000002", 50L)));
+        RegisterAttendanceRequestDTO request = new RegisterAttendanceRequestDTO("20210000002", 50L);
+        assertThrows(AttendanceAlreadyExistsException.class, () -> attendanceService.registerAttendance(request));
         verify(attendanceRepository, never()).save(any());
     }
 
@@ -286,8 +286,8 @@ class AttendanceServiceTest {
         when(userRepository.findByCodigo("20210000002")).thenReturn(Optional.of(user(2L, 1L, "20210000002", Rol.MIEMBRO, UserStatus.ACTIVE)));
         when(eventRepository.findById(50L)).thenReturn(Optional.empty());
 
-        assertThrows(EventNotFoundException.class, () ->
-                attendanceService.registerAttendance(new RegisterAttendanceRequestDTO("20210000002", 50L)));
+        RegisterAttendanceRequestDTO request = new RegisterAttendanceRequestDTO("20210000002", 50L);
+        assertThrows(EventNotFoundException.class, () -> attendanceService.registerAttendance(request));
     }
 
     @Test
@@ -296,8 +296,8 @@ class AttendanceServiceTest {
         when(userRepository.findByCodigo("20210000002")).thenReturn(Optional.of(user(2L, 1L, "20210000002", Rol.MIEMBRO, UserStatus.ACTIVE)));
         when(eventRepository.findById(50L)).thenReturn(Optional.of(event(50L, 2L)));
 
-        assertThrows(CrossTenantAccessException.class, () ->
-                attendanceService.registerAttendance(new RegisterAttendanceRequestDTO("20210000002", 50L)));
+        RegisterAttendanceRequestDTO request = new RegisterAttendanceRequestDTO("20210000002", 50L);
+        assertThrows(CrossTenantAccessException.class, () -> attendanceService.registerAttendance(request));
     }
 
     @Test
@@ -338,7 +338,6 @@ class AttendanceServiceTest {
     @Test
     void exportTodayCsv_generatesCsvWithRecords() {
         authenticate(9L, 1L, Rol.TENANT_ADMIN);
-        org.springframework.test.util.ReflectionTestUtils.setField(attendanceService, "self", attendanceService);
         when(attendanceRepository.findByTenantTenantIdAndCheckInAtBetweenOrderByCheckInAtDesc(any(), any(), any()))
                 .thenReturn(List.of(attendance(1L, 2L, 1L, "20210000002")));
 

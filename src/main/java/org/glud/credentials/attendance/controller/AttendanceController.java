@@ -20,12 +20,15 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/attendance")
 @RequiredArgsConstructor
 public class AttendanceController {
+
+    private static final ZoneId COLOMBIA = ZoneId.of("America/Bogota");
 
     private final AttendanceService attendanceService;
 
@@ -70,7 +73,7 @@ public class AttendanceController {
     })
     public ResponseEntity<String> exportToday() {
         String csv = attendanceService.exportTodayCsv();
-        String filename = "asistencia-" + LocalDate.now() + ".csv";
+        String filename = "asistencia-" + LocalDate.now(COLOMBIA) + ".csv";
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
                 .contentType(new MediaType("text", "csv", StandardCharsets.UTF_8))
