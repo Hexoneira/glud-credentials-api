@@ -334,4 +334,18 @@ class AttendanceServiceTest {
 
         assertThrows(RoleRequiredException.class, () -> attendanceService.todayAttendance());
     }
+
+    @Test
+    void exportTodayCsv_generatesCsvWithRecords() {
+        authenticate(9L, 1L, Rol.TENANT_ADMIN);
+        org.springframework.test.util.ReflectionTestUtils.setField(attendanceService, "self", attendanceService);
+        when(attendanceRepository.findByTenantTenantIdAndCheckInAtBetweenOrderByCheckInAtDesc(any(), any(), any()))
+                .thenReturn(List.of(attendance(1L, 2L, 1L, "20210000002")));
+
+        String csv = attendanceService.exportTodayCsv();
+
+        assertTrue(csv.startsWith("\uFEFF"));
+        assertTrue(csv.contains("20210000002"));
+        assertTrue(csv.contains("Registrado por"));
+    }
 }
