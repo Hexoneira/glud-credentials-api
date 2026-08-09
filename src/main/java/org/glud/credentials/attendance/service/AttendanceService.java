@@ -22,6 +22,8 @@ import org.glud.credentials.security.exception.InvalidTOTPException;
 import org.glud.credentials.security.exception.MemberNotFoundException;
 import org.glud.credentials.security.exception.RoleRequiredException;
 import org.glud.credentials.totp_seed.service.TOTPService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -34,6 +36,10 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class AttendanceService {
+
+    @Autowired
+    @Lazy
+    private AttendanceService self;
 
     private final AttendanceRepository attendanceRepository;
     private final UserRepository userRepository;
@@ -123,7 +129,7 @@ public class AttendanceService {
 
     @Transactional(readOnly = true)
     public String exportTodayCsv() {
-        return AttendanceCsvExporter.todayCsv(todayAttendance());
+        return AttendanceCsvExporter.todayCsv(self.todayAttendance());
     }
 
     private void assertValidTotp(User member, String totp) {

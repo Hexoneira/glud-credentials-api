@@ -54,6 +54,7 @@ class EventServiceTest {
     @BeforeEach
     void setUp() {
         eventService = new EventService(eventRepository, tenantRepository, userRepository, attendanceRepository, roleGuard);
+        org.springframework.test.util.ReflectionTestUtils.setField(eventService, "self", eventService);
     }
 
     @AfterEach

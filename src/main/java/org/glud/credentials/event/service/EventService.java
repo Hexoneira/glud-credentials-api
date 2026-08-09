@@ -22,6 +22,8 @@ import org.glud.credentials.security.exception.InvalidMemberActionException;
 import org.glud.credentials.security.exception.MemberNotFoundException;
 import org.glud.credentials.security.exception.RoleRequiredException;
 import org.glud.credentials.security.exception.TenantNotFoundException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -36,6 +38,10 @@ public class EventService {
 
     /** Ventana (en horas) en la que un evento se considera "en curso" desde su hora de inicio. */
     public static final long IN_PROGRESS_WINDOW_HOURS = 2;
+
+    @Autowired
+    @Lazy
+    private EventService self;
 
     private final EventRepository eventRepository;
     private final TenantRepository tenantRepository;
@@ -99,7 +105,7 @@ public class EventService {
     @Transactional(readOnly = true)
     public String exportAttendeesCsv(Long eventId) {
         Event event = requireOwnedEvent(eventId);
-        return AttendanceCsvExporter.attendeesCsv(event.getTitle(), attendees(eventId));
+        return AttendanceCsvExporter.attendeesCsv(event.getTitle(), self.attendees(eventId));
     }
 
     @Transactional
