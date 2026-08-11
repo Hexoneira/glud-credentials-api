@@ -180,7 +180,7 @@ class EventServiceTest {
         when(eventRepository.save(any(Event.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         EventResponseDTO dto = eventService.create(
-                new CreateEventRequestDTO("  Asamblea GLUD  ", LocalDateTime.of(2026, 8, 10, 18, 0), 3L));
+                new CreateEventRequestDTO("  Asamblea GLUD  ", LocalDateTime.now().plusDays(30), 3L));
 
         assertEquals("Asamblea GLUD", dto.title());
         assertEquals(3L, dto.tenantId());

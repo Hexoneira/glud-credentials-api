@@ -27,7 +27,7 @@ public record AttendanceResponseDTO(
                 attendance.getTenant().getTenantId(),
                 attendance.getTenant().getName(),
                 attendance.getCheckInAt(),
-                attendance.getMarkedBy().getCodigo()
+                attendance.getMarkedBy() != null ? attendance.getMarkedBy().getCodigo() : null
         );
     }
 }
