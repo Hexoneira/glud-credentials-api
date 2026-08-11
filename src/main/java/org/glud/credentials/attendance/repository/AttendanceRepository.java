@@ -20,4 +20,6 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
     List<Attendance> findByEventEventIdOrderByCheckInAtDesc(Long eventId);
 
     long countByEventEventId(Long eventId);
+
+    void deleteByUserUserId(Long userId);
 }

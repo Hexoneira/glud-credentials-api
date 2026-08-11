@@ -1,6 +1,8 @@
 package org.glud.credentials;
 
 import jakarta.persistence.EntityManager;
+import org.glud.credentials.auth.model.Guest;
+import org.glud.credentials.auth.model.GuestStatus;
 import org.glud.credentials.auth.model.Rol;
 import org.glud.credentials.auth.model.Tenant;
 import org.glud.credentials.auth.model.TenantStatus;
@@ -56,5 +58,43 @@ class TenantPersistenceTest {
         assertEquals("Directora Test", loaded.getTenant().getDirector());
         assertEquals(50, loaded.getTenant().getMemberLimit());
         assertEquals(TenantStatus.SUSPENDED, loaded.getTenant().getStatus());
+    }
+
+    @Test
+    void deletesUserWhoCreatedGuests() {
+        Tenant tenant = new Tenant();
+        tenant.setName("Grupo con invitados");
+        tenant.setTenantCode("GUESTFK");
+        tenant.setDirector("Directora Test");
+        tenant.setMemberLimit(50);
+        entityManager.persist(tenant);
+
+        User creator = new User();
+        creator.setUsername("admin-eliminado");
+        creator.setPassword("hash-bcrypt");
+        creator.setCodigo("20210009001");
+        creator.setEmail("admin@glud.org");
+        creator.setTenant(tenant);
+        creator.setRol(Rol.TENANT_ADMIN);
+        entityManager.persist(creator);
+
+        Guest guest = new Guest();
+        guest.setCodigo("guest-fk-1");
+        guest.setName("Invitado FK");
+        guest.setTenant(tenant);
+        guest.setCreatedBy(creator);
+        guest.setStatus(GuestStatus.ACTIVE);
+        entityManager.persist(guest);
+        entityManager.flush();
+
+        entityManager.createQuery("delete from User u where u.userId = :id")
+                .setParameter("id", creator.getUserId())
+                .executeUpdate();
+        entityManager.flush();
+        entityManager.clear();
+
+        Guest surviving = entityManager.find(Guest.class, guest.getGuestId());
+        assertNotNull(surviving);
+        assertNull(surviving.getCreatedBy());
     }
 }

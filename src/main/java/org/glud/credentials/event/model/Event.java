@@ -40,8 +40,8 @@ public class Event {
     @Column(nullable = false)
     private LocalDateTime startsAt;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "created_by", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "created_by")
     private User createdBy;
 
     @Column(nullable = false)

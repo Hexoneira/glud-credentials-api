@@ -11,6 +11,7 @@ import org.glud.credentials.auth.model.User;
 import org.glud.credentials.auth.model.UserStatus;
 import org.glud.credentials.auth.repository.TenantRepository;
 import org.glud.credentials.auth.repository.UserRepository;
+import org.glud.credentials.attendance.repository.AttendanceRepository;
 import org.glud.credentials.security.authorization.RoleGuard;
 import org.glud.credentials.security.components.UserDetailsImpl;
 import org.glud.credentials.security.exception.CrossTenantAccessException;
@@ -37,6 +38,7 @@ public class MemberAdminService {
     private final TenantRepository tenantRepository;
     private final PasswordEncoder passwordEncoder;
     private final RoleGuard roleGuard;
+    private final AttendanceRepository attendanceRepository;
 
     @Transactional(readOnly = true)
     public List<MemberResponseDTO> findAll(Long tenantId) {
@@ -130,6 +132,7 @@ public class MemberAdminService {
                 throw new InvalidMemberActionException("No puede eliminar a otro admin del grupo");
             }
         }
+        attendanceRepository.deleteByUserUserId(id);
         userRepository.delete(user);
     }
 

@@ -24,6 +24,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -31,6 +32,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import org.glud.credentials.attendance.repository.AttendanceRepository;
 import java.util.List;
 import java.util.Optional;
 
@@ -47,6 +49,8 @@ class MemberAdminServiceTest {
     private TenantRepository tenantRepository;
     @Mock
     private PasswordEncoder passwordEncoder;
+    @Mock
+    private AttendanceRepository attendanceRepository;
 
     @InjectMocks
     private MemberAdminService memberAdminService;
@@ -55,7 +59,7 @@ class MemberAdminServiceTest {
 
     @BeforeEach
     void setUp() {
-        memberAdminService = new MemberAdminService(userRepository, tenantRepository, passwordEncoder, roleGuard);
+        memberAdminService = new MemberAdminService(userRepository, tenantRepository, passwordEncoder, roleGuard, attendanceRepository);
     }
 
     @AfterEach
@@ -226,6 +230,19 @@ class MemberAdminServiceTest {
         memberAdminService.delete(2L);
 
         verify(userRepository).delete(member);
+    }
+
+    @Test
+    void delete_removesMemberAttendanceBeforeDeletingUser() {
+        authenticate(10L, 1L, Rol.TENANT_ADMIN);
+        User member = user(2L, 1L, "20210000002", Rol.MIEMBRO);
+        when(userRepository.findById(2L)).thenReturn(Optional.of(member));
+
+        memberAdminService.delete(2L);
+
+        InOrder inOrder = inOrder(attendanceRepository, userRepository);
+        inOrder.verify(attendanceRepository).deleteByUserUserId(2L);
+        inOrder.verify(userRepository).delete(member);
     }
 
     @Test
